@@ -15,15 +15,29 @@ try {
   }
 }
 
+// Default storage configuration (use environment variables or defaults)
+const storageConfig = {
+  maxFileSize: process.env.MAX_FILE_SIZE ? parseInt(process.env.MAX_FILE_SIZE) : (config.storage?.maxFileSize || 5 * 1024 * 1024), // 5MB default
+  allowedTypes: config.storage?.allowedTypes || [
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "image/gif",
+    "application/pdf",
+    "text/plain",
+    "text/csv",
+  ],
+};
+
 // Allowed file extensions
 const allowedExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.pdf', '.txt', '.csv'];
 
 // File filter with enhanced validation
 const fileFilter = (req, file, cb) => {
   // Check MIME type
-  if (!config.storage.allowedTypes.includes(file.mimetype)) {
+  if (!storageConfig.allowedTypes.includes(file.mimetype)) {
     return cb(
-      new Error(`Invalid file type: ${file.mimetype}. Allowed types: ${config.storage.allowedTypes.join(', ')}`),
+      new Error(`Invalid file type: ${file.mimetype}. Allowed types: ${storageConfig.allowedTypes.join(', ')}`),
       false
     );
   }
@@ -54,7 +68,7 @@ const storage = multer.memoryStorage();
 export const upload = multer({
   storage: storage,
   limits: {
-    fileSize: config.storage.maxFileSize
+    fileSize: storageConfig.maxFileSize
   },
   fileFilter: fileFilter
 });

@@ -46,7 +46,10 @@ const app = express();
 app.set("trust proxy", 1);
 
 // Middleware
-app.use(cors(config.cors));
+app.use(cors(config.cors || {
+  origin: process.env.CORS_ORIGIN || "*",
+  credentials: true,
+}));
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -130,7 +133,7 @@ app.get("/debug/db", (req, res) => {
 app.use(errorHandler);
 
 // Start server
-const PORT = config.server.port;
+const PORT = config.server?.port || process.env.PORT || 3000;
 app.listen(PORT, () => {
   logger.info(`API server running on port ${PORT}`, {
     env: process.env.NODE_ENV || "development",

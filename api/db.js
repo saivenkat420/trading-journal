@@ -60,7 +60,14 @@ if (process.env.DATABASE_URL) {
   }
 } else {
   // Traditional database config
-  poolConfig = config.database;
+  poolConfig = config.database || {
+    host: process.env.DB_HOST || "localhost",
+    port: parseInt(process.env.DB_PORT || "5432"),
+    database: process.env.DB_NAME || "trading_journal",
+    user: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "postgres",
+    ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
+  };
   // Ensure SSL is enabled for remote databases
   if (!poolConfig.ssl && !isLocal) {
     poolConfig.ssl = { rejectUnauthorized: false };
