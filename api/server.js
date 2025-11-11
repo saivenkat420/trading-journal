@@ -46,10 +46,48 @@ const app = express();
 app.set("trust proxy", 1);
 
 // Middleware
-app.use(cors(config.cors || {
-  origin: process.env.CORS_ORIGIN || "*",
-  credentials: true,
-}));
+// Robust CORS handling - supports:
+// - Single origin via CORS_ORIGIN
+// - Multiple origins as comma-separated values
+// - Trims whitespace and trailing slashes
+(() => {
+  // Prefer env var, then config.cors.origin, fallback to "*"
+  const rawOrigins =
+    process.env.CORS_ORIGIN ||
+    (config.cors && config.cors.origin) ||
+    "*";
+
+  if (rawOrigins === "*") {
+    app.use(cors({ origin: "*", credentials: true }));
+    app.options("*", cors({ origin: "*", credentials: true }));
+    return;
+  }
+
+  const allowedOrigins = new Set(
+    rawOrigins
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      // Remove any trailing slashes so header matches request Origin exactly
+      .map((s) => s.replace(/\/+$/, ""))
+  );
+
+  const corsOptions = {
+    origin: (origin, callback) => {
+      // Allow non-browser clients or same-origin requests without Origin header
+      if (!origin) return callback(null, true);
+      const normalized = origin.replace(/\/+$/, "");
+      if (allowedOrigins.has(normalized)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  };
+
+  app.use(cors(corsOptions));
+  app.options("*", cors(corsOptions));
+})();
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 

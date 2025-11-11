@@ -1,7 +1,23 @@
 // API client
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+// Normalize API base URL:
+// - Prefer VITE_API_URL from env
+// - Trim trailing slashes
+// - Ensure it ends with "/api"
+function resolveApiBaseUrl(): string {
+  const raw = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
+  let url = String(raw).trim();
+  // Remove trailing slashes
+  url = url.replace(/\/+$/, '');
+  // Append /api if missing
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+  return url;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
