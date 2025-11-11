@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { analysisApi } from '../utils/api';
 import { Analysis } from '../types';
 import { Card, Button, LoadingSpinner, ErrorMessage } from '../components';

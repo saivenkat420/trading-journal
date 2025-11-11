@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { goalsApi, analyticsApi, accountsApi } from "../utils/api";
 import { Goal, DashboardStats } from "../types";
 import {

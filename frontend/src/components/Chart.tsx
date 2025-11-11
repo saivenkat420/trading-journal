@@ -3,7 +3,6 @@ import React from 'react';
 interface ChartProps {
   type: 'line' | 'bar' | 'pie' | 'area';
   data: any[];
-  options?: any;
   height?: number;
   className?: string;
 }
@@ -12,7 +11,6 @@ interface ChartProps {
 export const Chart: React.FC<ChartProps> = ({
   type,
   data,
-  options = {},
   height = 300,
   className = '',
 }) => {
