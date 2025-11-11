@@ -5,12 +5,18 @@ import dotenv from 'dotenv';
 // Ensure environment variables are loaded before reading them
 dotenv.config();
 
-// Try config/config.js first, fallback to config.js
-let config;
+// Try config/config.js first, fallback to config.js, or use empty config
+let config = {};
 try {
   config = (await import('./config/config.js')).default;
 } catch (e) {
-  config = (await import('./config.js')).default;
+  try {
+    config = (await import('./config.js')).default;
+  } catch (e2) {
+    // Config file not found - use environment variables only
+    console.log('Config file not found, using environment variables only');
+    config = {};
+  }
 }
 
 const { Pool } = pg;
@@ -33,7 +39,7 @@ if (process.env.DATABASE_URL) {
 
   poolConfig = {
     connectionString: cs,
-    // Only enable SSL for non-local hosts (e.g., Supabase/Neon/Render)
+    // Only enable SSL for non-local hosts (e.g., Neon, Render, or other cloud databases)
     ssl: isLocal ? false : { rejectUnauthorized: false }
   };
 
@@ -52,17 +58,11 @@ if (process.env.DATABASE_URL) {
   } catch {
     console.log("DB connection: using connection string (unable to parse for debug)");
   }
-} else if (config.supabase?.connectionString) {
-  // Supabase connection string from config
-  poolConfig = {
-    connectionString: config.supabase.connectionString,
-    ssl: { rejectUnauthorized: false }
-  };
 } else {
   // Traditional database config
   poolConfig = config.database;
-  // If using Supabase URL, ensure SSL is enabled
-  if (config.supabase?.url && !poolConfig.ssl) {
+  // Ensure SSL is enabled for remote databases
+  if (!poolConfig.ssl && !isLocal) {
     poolConfig.ssl = { rejectUnauthorized: false };
   }
 }

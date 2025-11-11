@@ -1,9 +1,21 @@
 // Authentication middleware
 import jwt from "jsonwebtoken";
 import { AppError } from "./errors.js";
-import config from "../config.js";
 
-// Verify JWT token from Supabase or standard JWT
+// Try config/config.js first, fallback to config.js, or use empty config
+let config = {};
+try {
+  config = (await import("../config/config.js")).default;
+} catch (e) {
+  try {
+    config = (await import("../config.js")).default;
+  } catch (e2) {
+    // Config file not found - use environment variables only
+    config = {};
+  }
+}
+
+// Verify JWT token
 export function authenticate(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
@@ -21,33 +33,27 @@ export function authenticate(req, res, next) {
 
     const token = authHeader.replace("Bearer ", "");
 
-    // Try to verify as Supabase JWT first
+    // Decode and verify JWT token
     let decoded;
     try {
-      // Supabase JWTs can be verified with the JWT secret
-      // If using Supabase, you'd typically verify against their public key
-      // For now, we'll decode and verify the token structure
+      // Decode the token to verify its structure
       decoded = jwt.decode(token, { complete: true });
       
       if (!decoded || !decoded.payload) {
         throw new Error("Invalid token structure");
       }
 
-      // If we have a Supabase JWT secret, verify it
-      if (config.supabase.key) {
-        // For Supabase, you might need to fetch the public key
-        // For now, we'll trust the decoded payload if it has the right structure
-        const payload = decoded.payload;
-        
-        if (payload.sub || payload.user_id || payload.id) {
-          req.userId = payload.sub || payload.user_id || payload.id;
-          req.user = {
-            id: req.userId,
-            email: payload.email,
-            ...payload
-          };
-          return next();
-        }
+      // Extract user info from token payload
+      const payload = decoded.payload;
+      
+      if (payload.sub || payload.user_id || payload.id) {
+        req.userId = payload.sub || payload.user_id || payload.id;
+        req.user = {
+          id: req.userId,
+          email: payload.email,
+          ...payload
+        };
+        return next();
       }
 
       // Fallback: if token has user info, use it

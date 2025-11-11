@@ -2,12 +2,17 @@
 import multer from 'multer';
 import path from 'path';
 
-// Try config/config.js first, fallback to config.js
-let config;
+// Try config/config.js first, fallback to config.js, or use empty config
+let config = {};
 try {
   config = (await import('../config/config.js')).default;
 } catch (e) {
-  config = (await import('../config.js')).default;
+  try {
+    config = (await import('../config.js')).default;
+  } catch (e2) {
+    // Config file not found - use environment variables only
+    config = {};
+  }
 }
 
 // Allowed file extensions
