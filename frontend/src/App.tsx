@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Analytics } from "@vercel/analytics/next";
 import {
   Routes,
   Route,
@@ -293,6 +294,7 @@ function App() {
       <AuthProvider>
         <AppContent />
       </AuthProvider>
+      <Analytics />
     </ErrorBoundary>
   );
 }
