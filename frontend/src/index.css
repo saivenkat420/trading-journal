@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-dark-border-primary;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif; /* Using Inter from Google Fonts */
+    @apply text-dark-text-primary bg-dark-bg-primary; /* Apply dark mode defaults */
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+      monospace;
+  }
+}
+
+@layer components {
+  /* Custom scrollbar for dark mode */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-dark-bg-secondary;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-dark-bg-tertiary rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-dark-border-secondary;
+  }
+
+  .rich-text-editor .ql-toolbar {
+    @apply bg-dark-bg-elevated border-dark-border-primary text-dark-text-secondary rounded-t-lg;
+  }
+
+  .rich-text-editor .ql-container {
+    @apply bg-dark-bg-tertiary border-dark-border-primary text-dark-text-primary rounded-b-lg;
+  }
+
+  .rich-text-editor .ql-editor {
+    min-height: 200px;
+  }
+
+  .rich-text-editor .ql-picker {
+    color: inherit;
+  }
+
+  .progress-track {
+    @apply h-2 w-full bg-dark-bg-tertiary rounded-full overflow-hidden;
+  }
+}

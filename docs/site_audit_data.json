@@ -1,0 +1,20 @@
+{
+  "site_info": {
+    "root_url": "https://www.thedtjournal.com",
+    "audit_date": "",
+    "robots_txt": "User-agent: * Allow: / Sitemap: https://thedtjournal.com/sitemap.xml",
+    "sitemap_urls": [
+      "https://thedtjournal.com/",
+      "https://thedtjournal.com/analysis/new",
+      "https://thedtjournal.com/analysis/edit/:id",
+      "https://thedtjournal.com/analysis/view/:id",
+      "https://thedtjournal.com/daily/new",
+      "https://thedtjournal.com/daily/edit/:id",
+      "https://thedtjournal.com/daily/view/:id",
+      "https://thedtjournal.com/trade/new",
+      "https://thedtjournal.com/trade/edit/:id",
+      "https://thedtjournal.com/trade/view/:id"
+    ]
+  },
+  "pages": []
+}

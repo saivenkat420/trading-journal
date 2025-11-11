@@ -1,0 +1,14 @@
+url,title,status,h1,word_count,last_modified,has_forms,api_calls_count
+https://www.thedtjournal.com/journal,The DT Journal,200,The DT Journal,145,2025-11-09,false,8
+https://www.thedtjournal.com/journal?tab=daily-journal,The DT Journal,200,The DT Journal,41,2025-11-09,false,0
+https://www.thedtjournal.com/journal/daily/new,The DT Journal,200,Add New Daily Entry,0,2025-11-09,true,0
+https://www.thedtjournal.com/journal?tab=trade-log,The DT Journal,200,The DT Journal,141,2025-11-09,false,0
+https://www.thedtjournal.com/journal/trade/new,The DT Journal,200,Add New Trade,0,2025-11-09,true,0
+https://www.thedtjournal.com/journal?tab=insights,The DT Journal,200,The DT Journal,0,2025-11-09,false,0
+https://www.thedtjournal.com/journal?tab=analysis,The DT Journal,200,The DT Journal,0,2025-11-09,false,0
+https://www.thedtjournal.com/journal/analysis/new,The DT Journal,200,Add New Analysis,0,2025-11-09,true,1
+https://www.thedtjournal.com/journal?tab=trading-lab,The DT Journal,200,The DT Journal,0,2025-11-09,false,0
+https://www.thedtjournal.com/journal?tab=goals,The DT Journal,200,The DT Journal,0,2025-11-09,false,0
+https://www.thedtjournal.com/journal?tab=settings,The DT Journal,200,The DT Journal,0,2025-11-09,true,0
+https://www.thedtjournal.com/login,The DT Journal,200,The DT Collective Trading Journal,0,2025-11-09,true,1
+
