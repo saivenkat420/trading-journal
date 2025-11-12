@@ -135,9 +135,27 @@ function TradeDetail() {
         unit_size: tradeData.unit_size?.toString() || defaults.unit_size,
       });
 
-      // Load files if available
+      // Load files if available - handle both array and JSON string
       if (tradeData.files) {
-        setFiles(tradeData.files);
+        let filesArray = tradeData.files;
+        // If files is a string, parse it
+        if (typeof filesArray === 'string') {
+          try {
+            filesArray = JSON.parse(filesArray);
+          } catch (e) {
+            console.error('Error parsing files:', e);
+            filesArray = [];
+          }
+        }
+        // Ensure it's an array and filter out empty objects
+        if (Array.isArray(filesArray)) {
+          const validFiles = filesArray.filter((f: any) => f && f.id);
+          setFiles(validFiles);
+        } else {
+          setFiles([]);
+        }
+      } else {
+        setFiles([]);
       }
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Failed to load trade");

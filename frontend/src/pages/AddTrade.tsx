@@ -39,6 +39,9 @@ function AddTrade() {
   });
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<
+    { file: File; preview: string }[]
+  >([]);
   const confidenceOptions = [
     { value: "good", label: "Good" },
     { value: "average", label: "Average" },
@@ -48,6 +51,17 @@ function AddTrade() {
   useEffect(() => {
     loadOptions();
   }, []);
+
+  // Clean up preview URLs when component unmounts or files change
+  useEffect(() => {
+    return () => {
+      filePreviews.forEach(({ preview }) => {
+        if (preview.startsWith("blob:")) {
+          URL.revokeObjectURL(preview);
+        }
+      });
+    };
+  }, [filePreviews]);
 
   const loadOptions = async () => {
     try {
@@ -72,7 +86,23 @@ function AddTrade() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      setSelectedFiles(Array.from(files));
+      const fileArray = Array.from(files);
+      setSelectedFiles(fileArray);
+
+      // Create previews for image files
+      const previews = fileArray.map((file) => {
+        if (file.type.startsWith("image/")) {
+          return {
+            file,
+            preview: URL.createObjectURL(file),
+          };
+        }
+        return {
+          file,
+          preview: "",
+        };
+      });
+      setFilePreviews(previews);
     }
   };
 
@@ -131,14 +161,14 @@ function AddTrade() {
       });
 
       await tradesApi.create(formDataToSend);
-      
+
       navigate("/trade-log");
     } catch (error: any) {
       console.error("Error creating trade:", error);
       setError(
-        error?.response?.data?.error?.message || 
-        error?.message || 
-        "Failed to create trade"
+        error?.response?.data?.error?.message ||
+          error?.message ||
+          "Failed to create trade"
       );
     } finally {
       setLoading(false);
@@ -473,15 +503,64 @@ function AddTrade() {
               title="Attach trade files"
             />
             {selectedFiles.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm text-dark-text-secondary mb-1">
+              <div className="mt-4 space-y-3">
+                <p className="text-sm font-medium text-dark-text-primary">
                   Selected files ({selectedFiles.length}):
                 </p>
-                <ul className="text-xs text-dark-text-secondary list-disc list-inside">
-                  {selectedFiles.map((file, index) => (
-                    <li key={index}>{file.name}</li>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {filePreviews.map((item, index) => (
+                    <div
+                      key={index}
+                      className="border border-dark-border-primary rounded-lg p-3 bg-dark-bg-secondary"
+                    >
+                      {item.preview ? (
+                        <div className="space-y-2">
+                          <img
+                            src={item.preview}
+                            alt={item.file.name}
+                            className="w-full h-32 object-cover rounded border border-dark-border-primary"
+                          />
+                          <p
+                            className="text-xs text-dark-text-secondary truncate"
+                            title={item.file.name}
+                          >
+                            {item.file.name}
+                          </p>
+                          <p className="text-xs text-dark-text-tertiary">
+                            {(item.file.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="w-full h-32 flex items-center justify-center bg-dark-bg-tertiary rounded border border-dark-border-primary">
+                            <svg
+                              className="w-12 h-12 text-dark-text-tertiary"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <p
+                            className="text-xs text-dark-text-secondary truncate"
+                            title={item.file.name}
+                          >
+                            {item.file.name}
+                          </p>
+                          <p className="text-xs text-dark-text-tertiary">
+                            {(item.file.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
           </div>

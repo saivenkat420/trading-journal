@@ -167,10 +167,26 @@ router.get("/:id", validateUUID("id"), async (req, res, next) => {
 router.post(
   "/",
   uploadLimiter,
-  upload.array("files", 8),
+  (req, res, next) => {
+    upload.array("files", 8)(req, res, (err) => {
+      if (err) {
+        console.error('[TRADE CREATE] Multer error:', err);
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return next(new AppError("FILE_TOO_LARGE", `File size exceeds limit: ${err.message}`, 400));
+        }
+        if (err.message && err.message.includes('Invalid file type')) {
+          return next(new AppError("INVALID_FILE_TYPE", err.message, 400));
+        }
+        return next(new AppError("FILE_UPLOAD_ERROR", `File upload failed: ${err.message}`, 400));
+      }
+      next();
+    });
+  },
   validate(schemas.trade.create),
   async (req, res, next) => {
     try {
+      console.log(`[TRADE CREATE] Request received. Files: ${req.files?.length || 0}, Body keys: ${Object.keys(req.body).join(', ')}`);
+      
       // Sanitize request body
       const sanitizedBody = sanitizeRequestBody(req.body);
 
@@ -343,26 +359,43 @@ router.post(
 
         // Handle file uploads - store directly in database as bytea
         if (req.files && req.files.length > 0) {
+          console.log(`[TRADE CREATE] Processing ${req.files.length} file(s) for trade ${newTrade.id}`);
           const { generateFileName, getFileBuffer } = await import('../services/upload.js');
           
           for (const file of req.files) {
-            const filePath = generateFileName(file.originalname, file.fieldname);
-            const fileData = getFileBuffer(file);
-            
-            await client.query(
-              `INSERT INTO trade_files (
-              trade_id, file_name, file_path, file_size, file_type, file_data
-            ) VALUES ($1, $2, $3, $4, $5, $6)`,
-              [
-                newTrade.id,
-                file.originalname,
-                filePath,
-                file.size,
-                file.mimetype,
-                fileData, // Store binary data directly in database
-              ]
-            );
+            try {
+              const filePath = generateFileName(file.originalname, file.fieldname);
+              const fileData = getFileBuffer(file);
+              
+              console.log(`[TRADE CREATE] Inserting file: ${file.originalname}, size: ${file.size}, type: ${file.mimetype}`);
+              
+              const fileResult = await client.query(
+                `INSERT INTO trade_files (
+                trade_id, file_name, file_path, file_size, file_type, file_data
+              ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                [
+                  newTrade.id,
+                  file.originalname,
+                  filePath,
+                  file.size,
+                  file.mimetype,
+                  fileData, // Store binary data directly in database
+                ]
+              );
+              
+              console.log(`[TRADE CREATE] File inserted successfully: ${fileResult.rows[0].id}`);
+            } catch (fileError) {
+              console.error(`[TRADE CREATE] Error inserting file ${file.originalname}:`, fileError);
+              // Continue with other files, but log the error
+              throw new AppError(
+                "FILE_UPLOAD_ERROR",
+                `Failed to upload file ${file.originalname}: ${fileError.message}`,
+                500
+              );
+            }
           }
+        } else {
+          console.log(`[TRADE CREATE] No files attached to trade ${newTrade.id}`);
         }
 
         return newTrade;
@@ -380,7 +413,21 @@ router.put(
   "/:id",
   validateUUID("id"),
   uploadLimiter,
-  upload.array("files", 8),
+  (req, res, next) => {
+    upload.array("files", 8)(req, res, (err) => {
+      if (err) {
+        console.error('[TRADE UPDATE] Multer error:', err);
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return next(new AppError("FILE_TOO_LARGE", `File size exceeds limit: ${err.message}`, 400));
+        }
+        if (err.message && err.message.includes('Invalid file type')) {
+          return next(new AppError("INVALID_FILE_TYPE", err.message, 400));
+        }
+        return next(new AppError("FILE_UPLOAD_ERROR", `File upload failed: ${err.message}`, 400));
+      }
+      next();
+    });
+  },
   validate(schemas.trade.update),
   async (req, res, next) => {
     try {
@@ -603,18 +650,32 @@ router.put(
 
         // Handle new file uploads - store directly in database as bytea
         if (req.files && req.files.length > 0) {
+          console.log(`[TRADE UPDATE] Processing ${req.files.length} file(s) for trade ${id}`);
           const { generateFileName, getFileBuffer } = await import('../services/upload.js');
           
           for (const file of req.files) {
-            const filePath = generateFileName(file.originalname, file.fieldname);
-            const fileData = getFileBuffer(file);
-            
-            await client.query(
-              `INSERT INTO trade_files (
-              trade_id, file_name, file_path, file_size, file_type, file_data
-            ) VALUES ($1, $2, $3, $4, $5, $6)`,
-              [id, file.originalname, filePath, file.size, file.mimetype, fileData]
-            );
+            try {
+              const filePath = generateFileName(file.originalname, file.fieldname);
+              const fileData = getFileBuffer(file);
+              
+              console.log(`[TRADE UPDATE] Inserting file: ${file.originalname}, size: ${file.size}, type: ${file.mimetype}`);
+              
+              const fileResult = await client.query(
+                `INSERT INTO trade_files (
+                trade_id, file_name, file_path, file_size, file_type, file_data
+              ) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+                [id, file.originalname, filePath, file.size, file.mimetype, fileData]
+              );
+              
+              console.log(`[TRADE UPDATE] File inserted successfully: ${fileResult.rows[0].id}`);
+            } catch (fileError) {
+              console.error(`[TRADE UPDATE] Error inserting file ${file.originalname}:`, fileError);
+              throw new AppError(
+                "FILE_UPLOAD_ERROR",
+                `Failed to upload file ${file.originalname}: ${fileError.message}`,
+                500
+              );
+            }
           }
         }
 

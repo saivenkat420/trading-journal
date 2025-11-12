@@ -66,9 +66,41 @@ export const schemas = {
         .valid("futures", "forex", "stocks", "crypto", "commodity")
         .default("futures"),
       trade_type: Joi.string().valid("long", "short").required(),
-      position_size: Joi.number().positive().required(),
-      entry_price: Joi.number().positive().optional(),
-      exit_price: Joi.number().positive().optional(),
+      position_size: Joi.alternatives()
+        .try(
+          Joi.number().positive().required(),
+          Joi.string().custom((value, helpers) => {
+            if (value === "" || value === null || value === undefined)
+              return helpers.error("any.required");
+            const num = Number(value);
+            if (isNaN(num)) return helpers.error("number.base");
+            return num > 0 ? num : helpers.error("number.positive");
+          }).required()
+        ),
+      entry_price: Joi.alternatives()
+        .try(
+          Joi.number().positive().optional(),
+          Joi.string().custom((value, helpers) => {
+            if (value === "" || value === null || value === undefined)
+              return undefined;
+            const num = Number(value);
+            if (isNaN(num)) return helpers.error("number.base");
+            return num > 0 ? num : helpers.error("number.positive");
+          }).optional()
+        )
+        .optional(),
+      exit_price: Joi.alternatives()
+        .try(
+          Joi.number().positive().optional(),
+          Joi.string().custom((value, helpers) => {
+            if (value === "" || value === null || value === undefined)
+              return undefined;
+            const num = Number(value);
+            if (isNaN(num)) return helpers.error("number.base");
+            return num > 0 ? num : helpers.error("number.positive");
+          }).optional()
+        )
+        .optional(),
       stop_loss: Joi.number().positive().optional(),
       take_profit: Joi.number().positive().optional(),
       date: Joi.date().required(),

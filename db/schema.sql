@@ -130,8 +130,15 @@ CREATE TABLE IF NOT EXISTS trade_files (
     file_path VARCHAR(500) NOT NULL,
     file_size INTEGER, -- in bytes
     file_type VARCHAR(50), -- MIME type
+    file_data BYTEA, -- Binary file data stored directly in database
     uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add file_data column if it doesn't exist (for existing databases)
+ALTER TABLE trade_files ADD COLUMN IF NOT EXISTS file_data BYTEA;
+
+-- Create index on file_path for faster lookups
+CREATE INDEX IF NOT EXISTS idx_trade_files_path ON trade_files(file_path);
 
 -- Account Transactions table (for tracking account balance changes)
 CREATE TABLE IF NOT EXISTS account_transactions (
@@ -169,8 +176,15 @@ CREATE TABLE IF NOT EXISTS analysis_files (
     file_path VARCHAR(500) NOT NULL,
     file_size INTEGER,
     file_type VARCHAR(50),
+    file_data BYTEA, -- Binary file data stored directly in database
     uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add file_data column if it doesn't exist (for existing databases)
+ALTER TABLE analysis_files ADD COLUMN IF NOT EXISTS file_data BYTEA;
+
+-- Create index on file_path for faster lookups
+CREATE INDEX IF NOT EXISTS idx_analysis_files_path ON analysis_files(file_path);
 
 -- Goals table (monthly goals)
 CREATE TABLE IF NOT EXISTS goals (
