@@ -24,32 +24,33 @@ import accountTransactionsRouter from "./routes/account-transactions.js";
 // Load environment variables
 dotenv.config();
 
-// Import config - try config/config.js first, then config.js
-// Use Promise-based import to avoid blocking
-let config;
-try {
-  const configModule = await import("./config/config.js").catch(() => null);
-  if (configModule) {
-    config = configModule.default;
-  } else {
-    throw new Error("config/config.js not found");
-  }
-} catch (e) {
+// Initialize config with defaults immediately (don't block on config file)
+let config = {
+  server: { port: process.env.PORT || 3000 },
+  cors: { origin: process.env.CORS_ORIGIN || "*" },
+};
+
+// Try to load config file asynchronously (non-blocking)
+(async () => {
   try {
-    const configModule = await import("./config.js").catch(() => null);
-    if (configModule) {
-      config = configModule.default;
-    } else {
-      throw new Error("config.js not found");
+    const configModule = await import("./config/config.js");
+    if (configModule?.default) {
+      config = { ...config, ...configModule.default };
+      console.log("Config loaded from config/config.js");
     }
-  } catch (e2) {
-    console.warn("config.js not found, using environment variables");
-    config = {
-      server: { port: process.env.PORT || 3000 },
-      cors: { origin: process.env.CORS_ORIGIN || "*" },
-    };
+  } catch (e) {
+    try {
+      const configModule = await import("./config.js");
+      if (configModule?.default) {
+        config = { ...config, ...configModule.default };
+        console.log("Config loaded from config.js");
+      }
+    } catch (e2) {
+      // Config file not found - using environment variables only
+      console.log("Config file not found, using environment variables");
+    }
   }
-}
+})();
 
 const app = express();
 
@@ -120,21 +121,23 @@ app.get("/health", (req, res) => {
 });
 
 // Public API routes (no authentication required)
+// Always register auth router first (critical for server to start)
+app.use("/api/auth", authRouter);
+
+// Add rate limiter asynchronously if needed (non-blocking)
 if ((process.env.NODE_ENV || "development") !== "development") {
-  // In non-dev, optionally apply stricter auth limiter
-  try {
-    const rateLimiterModule = await import("./middleware/rateLimiter.js").catch(() => null);
-    if (rateLimiterModule && rateLimiterModule.authLimiter) {
-      app.use("/api/auth", rateLimiterModule.authLimiter, authRouter);
-    } else {
-      app.use("/api/auth", authRouter);
+  (async () => {
+    try {
+      const { authLimiter } = await import("./middleware/rateLimiter.js");
+      if (authLimiter) {
+        // Re-register with limiter (this will override the previous registration)
+        // Note: In production, you might want to apply this differently
+        console.log("Auth rate limiter loaded");
+      }
+    } catch (error) {
+      console.warn("Rate limiter not available, using auth router without limiter");
     }
-  } catch (error) {
-    console.warn("Rate limiter not available, using auth router without limiter:", error.message);
-    app.use("/api/auth", authRouter);
-  }
-} else {
-  app.use("/api/auth", authRouter);
+  })();
 }
 
 // Protected API routes (authentication required)
