@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import DOMPurify from "dompurify";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { tradesApi, strategiesApi } from "../utils/api";
+import { tradesApi, strategiesApi, default as api, API_BASE_URL } from "../utils/api";
 import { calculateTradePnl } from "../utils/pnlCalculator";
 import {
   Button,
@@ -240,22 +240,16 @@ function TradeDetail() {
       formData.append("date", trade.date);
 
       // Use the update endpoint with files
-      const response = await fetch(`/api/trades/${id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload files");
-      }
+      await tradesApi.update(id!, formData);
 
       setSuccess("Files uploaded successfully!");
       loadTrade();
     } catch (err: any) {
-      setError(err?.message || "Failed to upload files");
+      setError(
+        err?.response?.data?.error?.message || 
+        err?.message || 
+        "Failed to upload files"
+      );
     } finally {
       setUploadingFiles(false);
     }
@@ -267,21 +261,16 @@ function TradeDetail() {
     }
 
     try {
-      const response = await fetch(`/api/files/trades/${fileId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete file");
-      }
+      await api.delete(`/files/trades/${fileId}`);
 
       setSuccess("File deleted successfully!");
       loadTrade();
     } catch (err: any) {
-      setError(err?.message || "Failed to delete file");
+      setError(
+        err?.response?.data?.error?.message || 
+        err?.message || 
+        "Failed to delete file"
+      );
     }
   };
 
@@ -296,12 +285,13 @@ function TradeDetail() {
   const getFileUrl = (filePath: string) => {
     const token = localStorage.getItem("auth_token");
     const encodedFilename = encodeURIComponent(filePath);
+    // API_BASE_URL already includes /api, so use it directly
     if (token) {
-      return `/api/files/serve/${encodedFilename}?token=${encodeURIComponent(
+      return `${API_BASE_URL}/files/serve/${encodedFilename}?token=${encodeURIComponent(
         token
       )}`;
     }
-    return `/api/files/serve/${encodedFilename}`;
+    return `${API_BASE_URL}/files/serve/${encodedFilename}`;
   };
 
   if (loading) {

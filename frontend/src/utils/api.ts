@@ -17,7 +17,7 @@ function resolveApiBaseUrl(): string {
   return url;
 }
 
-const API_BASE_URL = resolveApiBaseUrl();
+export const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -56,6 +56,7 @@ api.interceptors.response.use(
 export const tradesApi = {
   getAll: (params?: any) => api.get('/trades', { params }),
   getById: (id: string) => api.get(`/trades/${id}`),
+  // Axios automatically handles FormData and sets Content-Type with boundary
   create: (data: any) => api.post('/trades', data),
   update: (id: string, data: any) => api.put(`/trades/${id}`, data),
   delete: (id: string) => api.delete(`/trades/${id}`)

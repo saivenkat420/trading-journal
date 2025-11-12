@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
-import { strategiesApi } from "../utils/api";
+import { strategiesApi, tradesApi } from "../utils/api";
 import {
   Button,
   Input,
@@ -130,23 +130,16 @@ function AddTrade() {
         formDataToSend.append("files", file);
       });
 
-      const response = await fetch("/api/trades", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
-        body: formDataToSend,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Failed to create trade");
-      }
-
+      await tradesApi.create(formDataToSend);
+      
       navigate("/trade-log");
     } catch (error: any) {
       console.error("Error creating trade:", error);
-      setError(error?.message || "Failed to create trade");
+      setError(
+        error?.response?.data?.error?.message || 
+        error?.message || 
+        "Failed to create trade"
+      );
     } finally {
       setLoading(false);
     }
