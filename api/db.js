@@ -23,12 +23,13 @@ const { Pool } = pg;
 
 // Support Supabase connection string or traditional config
 let poolConfig;
+let isLocal = false; // Declare outside if block
+
 if (process.env.DATABASE_URL) {
   // Connection string format
   const cs = process.env.DATABASE_URL;
   // Detect local connections to avoid forcing SSL
   // Examples considered local: localhost, 127.0.0.1
-  let isLocal = false;
   try {
     const url = new URL(cs);
     isLocal = ["localhost", "127.0.0.1"].includes(url.hostname);
@@ -60,8 +61,11 @@ if (process.env.DATABASE_URL) {
   }
 } else {
   // Traditional database config
+  const dbHost = config.database?.host || process.env.DB_HOST || "localhost";
+  isLocal = ["localhost", "127.0.0.1"].includes(dbHost);
+  
   poolConfig = config.database || {
-    host: process.env.DB_HOST || "localhost",
+    host: dbHost,
     port: parseInt(process.env.DB_PORT || "5432"),
     database: process.env.DB_NAME || "trading_journal",
     user: process.env.DB_USER || "postgres",
@@ -76,15 +80,29 @@ if (process.env.DATABASE_URL) {
 
 const pool = new Pool(poolConfig);
 
-// Test connection
+// Test connection (non-blocking)
 pool.on('connect', () => {
   console.log('Database connected');
 });
 
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
-  process.exit(-1);
+  // Don't exit process - let the server continue running
+  // The connection will be retried on next query
 });
+
+// Test connection asynchronously (don't block startup)
+(async () => {
+  try {
+    const client = await pool.connect();
+    console.log('Database connection test successful');
+    client.release();
+  } catch (error) {
+    console.warn('Database connection test failed (will retry on first query):', error.message);
+    // Don't throw - server can start without DB connection
+    // Connection will be established when first query runs
+  }
+})();
 
 export default pool;
 

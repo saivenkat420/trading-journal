@@ -44,16 +44,16 @@ export function authenticate(req, res, next) {
       }
 
       // Extract user info from token payload
-      const payload = decoded.payload;
-      
-      if (payload.sub || payload.user_id || payload.id) {
-        req.userId = payload.sub || payload.user_id || payload.id;
-        req.user = {
-          id: req.userId,
-          email: payload.email,
-          ...payload
-        };
-        return next();
+        const payload = decoded.payload;
+        
+        if (payload.sub || payload.user_id || payload.id) {
+          req.userId = payload.sub || payload.user_id || payload.id;
+          req.user = {
+            id: req.userId,
+            email: payload.email,
+            ...payload
+          };
+          return next();
       }
 
       // Fallback: if token has user info, use it

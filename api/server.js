@@ -25,14 +25,25 @@ import accountTransactionsRouter from "./routes/account-transactions.js";
 dotenv.config();
 
 // Import config - try config/config.js first, then config.js
+// Use Promise-based import to avoid blocking
 let config;
 try {
-  config = (await import("./config/config.js")).default;
+  const configModule = await import("./config/config.js").catch(() => null);
+  if (configModule) {
+    config = configModule.default;
+  } else {
+    throw new Error("config/config.js not found");
+  }
 } catch (e) {
   try {
-    config = (await import("./config.js")).default;
+    const configModule = await import("./config.js").catch(() => null);
+    if (configModule) {
+      config = configModule.default;
+    } else {
+      throw new Error("config.js not found");
+    }
   } catch (e2) {
-    logger.warn("config.js not found, using environment variables");
+    console.warn("config.js not found, using environment variables");
     config = {
       server: { port: process.env.PORT || 3000 },
       cors: { origin: process.env.CORS_ORIGIN || "*" },
@@ -112,9 +123,14 @@ app.get("/health", (req, res) => {
 if ((process.env.NODE_ENV || "development") !== "development") {
   // In non-dev, optionally apply stricter auth limiter
   try {
-    const { authLimiter } = await import("./middleware/rateLimiter.js");
-    app.use("/api/auth", authLimiter, authRouter);
-  } catch {
+    const rateLimiterModule = await import("./middleware/rateLimiter.js").catch(() => null);
+    if (rateLimiterModule && rateLimiterModule.authLimiter) {
+      app.use("/api/auth", rateLimiterModule.authLimiter, authRouter);
+    } else {
+      app.use("/api/auth", authRouter);
+    }
+  } catch (error) {
+    console.warn("Rate limiter not available, using auth router without limiter:", error.message);
     app.use("/api/auth", authRouter);
   }
 } else {
@@ -172,10 +188,28 @@ app.use(errorHandler);
 
 // Start server
 const PORT = config.server?.port || process.env.PORT || 3000;
-app.listen(PORT, () => {
+
+// Start server with error handling
+const server = app.listen(PORT, () => {
+  console.log(`✅ API server running on port ${PORT}`);
   logger.info(`API server running on port ${PORT}`, {
     env: process.env.NODE_ENV || "development",
     port: PORT,
+  });
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('❌ Server error:', error);
+  logger.error('Server error', { error: error.message, stack: error.stack });
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
   });
 });
 

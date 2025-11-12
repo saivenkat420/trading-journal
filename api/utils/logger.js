@@ -8,23 +8,8 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Ensure logs directory exists
-const logsDir = path.join(__dirname, "..", "logs");
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
-}
-
-// Define log format
-const logFormat = winston.format.combine(
-  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-  winston.format.errors({ stack: true }),
-  winston.format.splat(),
-  winston.format.json()
-);
-
-// Console format for development
+// Console format (always use this for Render/cloud platforms)
 const consoleFormat = winston.format.combine(
-  winston.format.colorize(),
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
     let msg = `${timestamp} [${level}]: ${message}`;
@@ -35,35 +20,56 @@ const consoleFormat = winston.format.combine(
   })
 );
 
-// Create logger
+// Define log format for files
+const logFormat = winston.format.combine(
+  winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  winston.format.errors({ stack: true }),
+  winston.format.splat(),
+  winston.format.json()
+);
+
+// Create logger with console transport first (critical for Render)
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || "info",
-  format: logFormat,
+  format: consoleFormat,
   defaultMeta: { service: "trading-journal-api" },
   transports: [
-    // Write all logs to combined.log
-    new winston.transports.File({
-      filename: path.join(logsDir, "combined.log"),
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-    // Write errors to error.log
-    new winston.transports.File({
-      filename: path.join(logsDir, "error.log"),
-      level: "error",
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
+    // Always add console transport (required for Render logs)
+    new winston.transports.Console({
+      format: consoleFormat,
     }),
   ],
 });
 
-// Add console transport in development
-if (process.env.NODE_ENV !== "production") {
+// Try to add file transports (optional, graceful failure)
+try {
+  const logsDir = path.join(__dirname, "..", "logs");
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+  
+  // Add file transports only if directory creation succeeded
   logger.add(
-    new winston.transports.Console({
-      format: consoleFormat,
+    new winston.transports.File({
+      filename: path.join(logsDir, "combined.log"),
+      format: logFormat,
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
     })
   );
+  logger.add(
+    new winston.transports.File({
+      filename: path.join(logsDir, "error.log"),
+      level: "error",
+      format: logFormat,
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    })
+  );
+} catch (error) {
+  // File logging failed (e.g., no write permissions on Render)
+  // Continue with console logging only
+  console.warn("File logging unavailable, using console only:", error.message);
 }
 
 export default logger;
