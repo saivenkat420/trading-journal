@@ -156,11 +156,23 @@ function AddTrade() {
       }
 
       // Add files
-      selectedFiles.forEach((file) => {
+      console.log(
+        `[ADD TRADE] Adding ${selectedFiles.length} file(s) to FormData`
+      );
+      selectedFiles.forEach((file, index) => {
+        console.log(
+          `[ADD TRADE] File ${index + 1}: ${file.name}, size: ${
+            file.size
+          }, type: ${file.type}`
+        );
         formDataToSend.append("files", file);
       });
 
+      console.log(
+        `[ADD TRADE] Submitting trade with FormData. Files count: ${selectedFiles.length}`
+      );
       await tradesApi.create(formDataToSend);
+      console.log(`[ADD TRADE] Trade created successfully`);
 
       navigate("/trade-log");
     } catch (error: any) {

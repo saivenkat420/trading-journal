@@ -214,6 +214,11 @@ router.post(
         unit_size,
       } = sanitizedBody;
       const userId = req.userId;
+      
+      // Convert position_size to number if it's a string (from FormData)
+      const parsedPositionSize = typeof position_size === 'string' ? parseFloat(position_size) : position_size;
+      
+      console.log(`[TRADE CREATE] Parsed position_size: ${parsedPositionSize} (type: ${typeof parsedPositionSize})`);
 
       // Parse JSON fields if they're strings
       const parsedTagIds = Array.isArray(tag_ids)
@@ -295,7 +300,7 @@ router.post(
             symbol,
             asset_class,
             trade_type,
-            position_size,
+            parsedPositionSize,
             entry_price || null,
             exit_price || null,
             stop_loss || null,
