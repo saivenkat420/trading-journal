@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
-import { strategiesApi, tradesApi } from "../utils/api";
+import { strategiesApi, tradesApi, accountsApi } from "../utils/api";
 import {
   Button,
   Input,
@@ -15,6 +15,9 @@ import {
 function AddTrade() {
   const navigate = useNavigate();
   const [strategies, setStrategies] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
+  const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
+  const [accountPnls, setAccountPnls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -66,8 +69,12 @@ function AddTrade() {
   const loadOptions = async () => {
     try {
       setLoadingOptions(true);
-      const strategiesRes = await strategiesApi.getAll();
+      const [strategiesRes, accountsRes] = await Promise.all([
+        strategiesApi.getAll(),
+        accountsApi.getAll(),
+      ]);
       setStrategies(strategiesRes.data.data);
+      setAccounts(accountsRes.data.data || []);
     } catch (error: any) {
       console.error("Error loading options:", error);
       setError(
@@ -76,6 +83,132 @@ function AddTrade() {
     } finally {
       setLoadingOptions(false);
     }
+  };
+
+  // Calculate P&L for a trade based on current form data
+  const calculatePnl = useMemo(() => {
+    if (
+      !formData.entry_price ||
+      !formData.exit_price ||
+      !formData.position_size
+    ) {
+      return 0;
+    }
+
+    const entry = parseFloat(formData.entry_price);
+    const exit = parseFloat(formData.exit_price);
+    const positionSize = parseFloat(formData.position_size);
+    const fees = parseFloat(formData.fees || "0");
+
+    const priceDiff =
+      formData.trade_type === "long" ? exit - entry : entry - exit;
+
+    switch (formData.asset_class) {
+      case "stocks":
+        return priceDiff * positionSize - fees;
+      case "forex": {
+        const contractSize = parseFloat(formData.contract_size || "10");
+        return priceDiff * contractSize * positionSize - fees;
+      }
+      case "futures": {
+        const pointValue = parseFloat(formData.point_value || "20");
+        return priceDiff * pointValue * positionSize - fees;
+      }
+      case "commodity": {
+        const contractSize = parseFloat(formData.contract_size || "100");
+        return priceDiff * contractSize * positionSize - fees;
+      }
+      case "crypto":
+        return priceDiff * positionSize - fees;
+      default:
+        return priceDiff * positionSize - fees;
+    }
+  }, [
+    formData.entry_price,
+    formData.exit_price,
+    formData.position_size,
+    formData.trade_type,
+    formData.asset_class,
+    formData.fees,
+    formData.contract_size,
+    formData.point_value,
+  ]);
+
+  // Auto-calculate P&L for selected accounts when trade data changes
+  // Only update if P&L calculation changed or account selection changed
+  useEffect(() => {
+    if (selectedAccountIds.length > 0 && calculatePnl !== 0) {
+      setAccountPnls((prevPnls) => {
+        const newAccountPnls: Record<string, string> = {};
+        selectedAccountIds.forEach((accountId) => {
+          // If user hasn't manually set a value, auto-calculate
+          // Otherwise keep existing value
+          if (!prevPnls[accountId] || prevPnls[accountId] === "") {
+            // Distribute P&L evenly across selected accounts
+            const pnlPerAccount = (
+              calculatePnl / selectedAccountIds.length
+            ).toFixed(2);
+            newAccountPnls[accountId] = pnlPerAccount;
+          } else {
+            // Keep user's manual input
+            newAccountPnls[accountId] = prevPnls[accountId];
+          }
+        });
+        return newAccountPnls;
+      });
+    }
+  }, [calculatePnl, selectedAccountIds.join(",")]); // Only recalculate when P&L or account selection changes
+
+  const handleAccountToggle = (accountId: string) => {
+    if (selectedAccountIds.includes(accountId)) {
+      // Remove account
+      setSelectedAccountIds(
+        selectedAccountIds.filter((id) => id !== accountId)
+      );
+      const newPnls = { ...accountPnls };
+      delete newPnls[accountId];
+      setAccountPnls(newPnls);
+    } else {
+      // Add account
+      setSelectedAccountIds([...selectedAccountIds, accountId]);
+      // Auto-calculate P&L for new account
+      if (calculatePnl !== 0 && selectedAccountIds.length > 0) {
+        const pnlPerAccount = (
+          calculatePnl /
+          (selectedAccountIds.length + 1)
+        ).toFixed(2);
+        setAccountPnls({
+          ...accountPnls,
+          [accountId]: pnlPerAccount,
+        });
+        // Recalculate existing accounts
+        const updatedPnls: Record<string, string> = {};
+        [...selectedAccountIds, accountId].forEach((id) => {
+          updatedPnls[id] = (
+            calculatePnl /
+            (selectedAccountIds.length + 1)
+          ).toFixed(2);
+        });
+        setAccountPnls(updatedPnls);
+      } else if (calculatePnl !== 0) {
+        setAccountPnls({
+          ...accountPnls,
+          [accountId]: calculatePnl.toFixed(2),
+        });
+      } else {
+        setAccountPnls({
+          ...accountPnls,
+          [accountId]: "",
+        });
+      }
+    }
+  };
+
+  const handleAccountPnlChange = (accountId: string, value: string) => {
+    setAccountPnls({
+      ...accountPnls,
+      [accountId]: value,
+    });
   };
 
   const selectedStrategy = useMemo(
@@ -148,11 +281,22 @@ function AddTrade() {
         formDataToSend.append("unit_size", formData.unit_size);
       }
 
-      if (Object.keys(formData.account_pnls).length > 0) {
-        formDataToSend.append(
-          "account_pnls",
-          JSON.stringify(formData.account_pnls)
-        );
+      // Add account P&Ls if accounts are selected
+      if (selectedAccountIds.length > 0) {
+        const accountPnlsToSend: Record<string, number> = {};
+        selectedAccountIds.forEach((accountId) => {
+          const pnlValue = parseFloat(accountPnls[accountId] || "0");
+          if (!isNaN(pnlValue)) {
+            accountPnlsToSend[accountId] = pnlValue;
+          }
+        });
+
+        if (Object.keys(accountPnlsToSend).length > 0) {
+          formDataToSend.append(
+            "account_pnls",
+            JSON.stringify(accountPnlsToSend)
+          );
+        }
       }
 
       // Add files
@@ -496,6 +640,114 @@ function AddTrade() {
             placeholder="What went well?, What should have been avoided? Lessons learnt"
             rows={4}
           />
+
+          {/* Account Selection */}
+          {accounts.length > 0 && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-dark-text-primary mb-3">
+                  Link to Account(s){" "}
+                  <span className="text-dark-text-tertiary text-xs">
+                    (Optional - for goal tracking)
+                  </span>
+                </label>
+                <div className="space-y-3">
+                  {accounts.map((account) => {
+                    const isSelected = selectedAccountIds.includes(account.id);
+                    return (
+                      <div
+                        key={account.id}
+                        className={`border rounded-lg p-4 transition-all ${
+                          isSelected
+                            ? "border-dark-accent-primary bg-dark-accent-primary/10"
+                            : "border-dark-border-primary bg-dark-bg-secondary hover:border-dark-border-secondary"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3 flex-1">
+                            <input
+                              type="checkbox"
+                              id={`account-${account.id}`}
+                              checked={isSelected}
+                              onChange={() => handleAccountToggle(account.id)}
+                              className="mt-1 rounded border-dark-border-primary text-dark-accent-primary focus:ring-dark-accent-primary"
+                              aria-label={`Select account ${account.name}`}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <label
+                                  className="text-sm font-medium text-dark-text-primary cursor-pointer"
+                                  onClick={() =>
+                                    handleAccountToggle(account.id)
+                                  }
+                                >
+                                  {account.name}
+                                </label>
+                                <span className="text-xs text-dark-text-tertiary">
+                                  Balance: $
+                                  {Number(account.current_balance || 0).toFixed(
+                                    2
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="mt-3 ml-7">
+                            <Input
+                              label="P&L for this account"
+                              type="number"
+                              step="0.01"
+                              value={accountPnls[account.id] || ""}
+                              onChange={(e) =>
+                                handleAccountPnlChange(
+                                  account.id,
+                                  e.target.value
+                                )
+                              }
+                              placeholder={
+                                calculatePnl !== 0
+                                  ? `Auto: ${(
+                                      calculatePnl / selectedAccountIds.length
+                                    ).toFixed(2)}`
+                                  : "Enter P&L"
+                              }
+                              className="max-w-xs"
+                            />
+                            {calculatePnl !== 0 && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const autoPnl = (
+                                    calculatePnl / selectedAccountIds.length
+                                  ).toFixed(2);
+                                  handleAccountPnlChange(account.id, autoPnl);
+                                }}
+                                className="mt-1 text-xs text-dark-accent-primary hover:underline"
+                              >
+                                Use auto-calculated: $
+                                {(
+                                  calculatePnl / selectedAccountIds.length
+                                ).toFixed(2)}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {selectedAccountIds.length > 0 && (
+                  <p className="mt-2 text-xs text-dark-text-tertiary">
+                    💡 Tip: P&L will be automatically distributed evenly across
+                    selected accounts. You can manually adjust each account's
+                    P&L if needed.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="mb-4">
             <label

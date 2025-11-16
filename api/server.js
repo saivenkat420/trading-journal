@@ -26,9 +26,9 @@ dotenv.config();
 
 // Initialize config with defaults immediately (don't block on config file)
 let config = {
-  server: { port: process.env.PORT || 3000 },
-  cors: { origin: process.env.CORS_ORIGIN || "*" },
-};
+      server: { port: process.env.PORT || 3000 },
+      cors: { origin: process.env.CORS_ORIGIN || "*" },
+    };
 
 // Try to load config file asynchronously (non-blocking)
 (async () => {
@@ -127,8 +127,8 @@ app.use("/api/auth", authRouter);
 // Add rate limiter asynchronously if needed (non-blocking)
 if ((process.env.NODE_ENV || "development") !== "development") {
   (async () => {
-    try {
-      const { authLimiter } = await import("./middleware/rateLimiter.js");
+  try {
+    const { authLimiter } = await import("./middleware/rateLimiter.js");
       if (authLimiter) {
         // Re-register with limiter (this will override the previous registration)
         // Note: In production, you might want to apply this differently
@@ -136,7 +136,7 @@ if ((process.env.NODE_ENV || "development") !== "development") {
       }
     } catch (error) {
       console.warn("Rate limiter not available, using auth router without limiter");
-    }
+  }
   })();
 }
 
