@@ -107,9 +107,56 @@ export const schemas = {
       strategy_id: Joi.string().uuid().optional(),
       notes: Joi.string().optional().allow(""),
       reflection: Joi.string().optional().allow(""),
-      tag_ids: Joi.array().items(Joi.string().uuid()).default([]),
-      account_pnls: Joi.object()
-        .pattern(Joi.string().uuid(), Joi.number())
+      tag_ids: Joi.alternatives()
+        .try(
+          Joi.array().items(Joi.string().uuid()),
+          Joi.string().custom((value, helpers) => {
+            if (value === "" || value === null || value === undefined) {
+              return [];
+            }
+            try {
+              const parsed = JSON.parse(value);
+              if (!Array.isArray(parsed)) {
+                return helpers.error("any.invalid");
+              }
+              return parsed;
+            } catch {
+              return helpers.error("any.invalid");
+            }
+          })
+        )
+        .default([]),
+      account_pnls: Joi.alternatives()
+        .try(
+          Joi.object().pattern(Joi.string().uuid(), Joi.number()),
+          Joi.string().custom((value, helpers) => {
+            if (value === "" || value === null || value === undefined) {
+              return {};
+            }
+            try {
+              const parsed = JSON.parse(value);
+              if (typeof parsed !== "object" || Array.isArray(parsed)) {
+                return helpers.error("any.invalid");
+              }
+              // Validate and convert each key-value pair
+              for (const [key, val] of Object.entries(parsed)) {
+                const keyValidation = Joi.string().uuid().validate(key);
+                if (keyValidation.error) {
+                  return helpers.error("any.invalid");
+                }
+                const numVal = typeof val === "number" ? val : Number(val);
+                if (isNaN(numVal)) {
+                  return helpers.error("any.invalid");
+                }
+                // Convert string numbers to actual numbers
+                parsed[key] = numVal;
+              }
+              return parsed;
+            } catch {
+              return helpers.error("any.invalid");
+            }
+          })
+        )
         .default({}),
       session: Joi.string()
         .valid("asia", "london", "newyork", "newyork_pm")
@@ -180,10 +227,57 @@ export const schemas = {
       notes: Joi.string().optional().allow(""),
       reflection: Joi.string().optional().allow(""),
       status: Joi.string().valid("open", "closed", "reviewed").optional(),
-      account_pnls: Joi.object()
-        .pattern(Joi.string().uuid(), Joi.number())
+      account_pnls: Joi.alternatives()
+        .try(
+          Joi.object().pattern(Joi.string().uuid(), Joi.number()),
+          Joi.string().custom((value, helpers) => {
+            if (value === "" || value === null || value === undefined) {
+              return {};
+            }
+            try {
+              const parsed = JSON.parse(value);
+              if (typeof parsed !== "object" || Array.isArray(parsed)) {
+                return helpers.error("any.invalid");
+              }
+              // Validate and convert each key-value pair
+              for (const [key, val] of Object.entries(parsed)) {
+                const keyValidation = Joi.string().uuid().validate(key);
+                if (keyValidation.error) {
+                  return helpers.error("any.invalid");
+                }
+                const numVal = typeof val === "number" ? val : Number(val);
+                if (isNaN(numVal)) {
+                  return helpers.error("any.invalid");
+                }
+                // Convert string numbers to actual numbers
+                parsed[key] = numVal;
+              }
+              return parsed;
+            } catch {
+              return helpers.error("any.invalid");
+            }
+          })
+        )
         .optional(),
-      tag_ids: Joi.array().items(Joi.string().uuid()).optional(),
+      tag_ids: Joi.alternatives()
+        .try(
+          Joi.array().items(Joi.string().uuid()),
+          Joi.string().custom((value, helpers) => {
+            if (value === "" || value === null || value === undefined) {
+              return [];
+            }
+            try {
+              const parsed = JSON.parse(value);
+              if (!Array.isArray(parsed)) {
+                return helpers.error("any.invalid");
+              }
+              return parsed;
+            } catch {
+              return helpers.error("any.invalid");
+            }
+          })
+        )
+        .optional(),
       // P/L calculation fields - convert strings to numbers, handle empty strings
       fees: Joi.alternatives()
         .try(
