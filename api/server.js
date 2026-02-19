@@ -192,6 +192,28 @@ app.use(errorHandler);
 // Start server
 const PORT = config.server?.port || process.env.PORT || 3000;
 
+let keepAliveInterval = null;
+
+// Self-ping to escape Render cold start
+function startKeepAlive() {
+  const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  const INTERVAL_MS = 10_000;
+
+  const ping = async () => {
+    try {
+      const res = await fetch(`${url}/health`);
+      if (!res.ok) logger.warn(`Keep-alive ping returned ${res.status}`);
+    } catch (err) {
+      logger.warn("Keep-alive ping failed", { error: err.message });
+    }
+  };
+
+  const intervalId = setInterval(ping, INTERVAL_MS);
+  ping();
+  logger.info(`Keep-alive started: pinging ${url}/health every ${INTERVAL_MS / 1000}s`);
+  return intervalId;
+}
+
 // Start server with error handling
 const server = app.listen(PORT, () => {
   console.log(`✅ API server running on port ${PORT}`);
@@ -199,6 +221,10 @@ const server = app.listen(PORT, () => {
     env: process.env.NODE_ENV || "development",
     port: PORT,
   });
+
+  if (process.env.RENDER_EXTERNAL_URL) {
+    keepAliveInterval = startKeepAlive();
+  }
 });
 
 // Handle server errors
@@ -210,6 +236,7 @@ server.on('error', (error) => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  if (keepAliveInterval) clearInterval(keepAliveInterval);
   server.close(() => {
     console.log('Server closed');
     process.exit(0);

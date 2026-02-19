@@ -55,7 +55,6 @@ function AddTrade() {
     loadOptions();
   }, []);
 
-  // Clean up preview URLs when component unmounts or files change
   useEffect(() => {
     return () => {
       filePreviews.forEach(({ preview }) => {

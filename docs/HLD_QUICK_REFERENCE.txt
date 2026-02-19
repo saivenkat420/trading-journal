@@ -1,0 +1,77 @@
+═══════════════════════════════════════════════════════════════════
+                    TRADING JOURNAL - HLD DIAGRAM
+                    Quick Reference for Interviews
+═══════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER BROWSER                            │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ HTTPS
+                             │
+┌────────────────────────────▼────────────────────────────────────┐
+│              FRONTEND (React SPA) - Vercel CDN                  │
+├──────────────────────────────────────────────────────────────────┤
+│  Pages: Dashboard, TradeLog, AddTrade, Analysis, Goals          │
+│  Components: Button, Card, Chart, Input, Select                │
+│  API Client: Axios with JWT interceptors                         │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ REST API (JSON/FormData)
+                             │
+┌────────────────────────────▼────────────────────────────────────┐
+│         BACKEND API (Node.js/Express) - Render                  │
+├──────────────────────────────────────────────────────────────────┤
+│  Middleware: CORS → Rate Limit → Auth (JWT) → Validation       │
+│  Routes: /auth, /trades, /accounts, /goals, /analysis, /files  │
+│  Services: File Upload (Multer), DB Pool, Transactions          │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ SQL (pg library)
+                             │
+┌────────────────────────────▼────────────────────────────────────┐
+│         DATABASE (PostgreSQL) - Neon Serverless                 │
+├──────────────────────────────────────────────────────────────────┤
+│  Tables: users, accounts, trades, trade_files, goals, etc.      │
+│  Features: ACID, JSONB, BYTEA (file storage), Foreign Keys      │
+└──────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════
+                        KEY DATA FLOWS
+═══════════════════════════════════════════════════════════════════
+
+1. AUTHENTICATION FLOW:
+   User → Frontend → POST /api/auth/login → Backend → Query DB
+   → Generate JWT → Response → Frontend stores token
+
+2. TRADE CREATION FLOW:
+   User fills form → Frontend → POST /api/trades (FormData)
+   → Backend validates → DB Transaction (INSERT trade, accounts, files)
+   → Response → Frontend redirects
+
+3. FILE UPLOAD FLOW:
+   User selects files → Frontend → FormData → Backend (Multer)
+   → Convert to Buffer → DB INSERT (BYTEA) → Response
+
+═══════════════════════════════════════════════════════════════════
+                    KEY TECHNOLOGIES
+═══════════════════════════════════════════════════════════════════
+
+Frontend:  React 18, TypeScript, Vite, Axios, Tailwind CSS
+Backend:   Node.js, Express.js, JWT, Joi, Multer, Winston
+Database:  PostgreSQL (Neon), pg library
+Deploy:    Vercel (Frontend), Render (Backend)
+Auth:      JWT tokens, localStorage
+Storage:   Files stored as BYTEA in PostgreSQL
+
+═══════════════════════════════════════════════════════════════════
+                    KEY DESIGN DECISIONS
+═══════════════════════════════════════════════════════════════════
+
+✓ 3-Tier Architecture (Separation of concerns)
+✓ RESTful API (Stateless, scalable)
+✓ JWT Authentication (No server-side sessions)
+✓ Files in Database (Simplicity, consistency)
+✓ PostgreSQL (ACID compliance for financial data)
+✓ Connection Pooling (Database efficiency)
+✓ Transaction Management (Data consistency)
+
+═══════════════════════════════════════════════════════════════════
+
