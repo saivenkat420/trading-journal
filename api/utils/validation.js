@@ -217,7 +217,10 @@ export const schemas = {
     }),
 
     update: Joi.object({
+      date: Joi.date().optional(),
       symbol: Joi.string().max(50).optional(),
+      trade_type: Joi.string().valid("long", "short").optional(),
+      position_size: Joi.number().positive().optional(),
       entry_price: Joi.number().positive().optional(),
       exit_price: Joi.number().positive().optional(),
       session: Joi.string()
@@ -227,6 +230,19 @@ export const schemas = {
       notes: Joi.string().optional().allow(""),
       reflection: Joi.string().optional().allow(""),
       status: Joi.string().valid("open", "closed", "reviewed").optional(),
+      realized_pnl: Joi.alternatives()
+        .try(
+          Joi.number(),
+          Joi.string()
+            .allow("")
+            .custom((value, helpers) => {
+              if (value === "" || value === null || value === undefined)
+                return null;
+              const num = Number(value);
+              return isNaN(num) ? helpers.error("number.base") : num;
+            })
+        )
+        .optional(),
       account_pnls: Joi.alternatives()
         .try(
           Joi.object().pattern(Joi.string().uuid(), Joi.number()),

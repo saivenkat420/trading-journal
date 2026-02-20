@@ -440,7 +440,10 @@ router.put(
       // Sanitize request body
       const sanitizedBody = sanitizeRequestBody(req.body);
       const {
+        date,
         symbol,
+        trade_type,
+        position_size,
         entry_price,
         exit_price,
         session,
@@ -448,6 +451,7 @@ router.put(
         notes,
         reflection,
         status,
+        realized_pnl,
         account_pnls,
         tag_ids,
         fees,
@@ -474,9 +478,24 @@ router.put(
         const params = [];
         let paramCount = 1;
 
+        if (date !== undefined) {
+          updates.push(`date = $${paramCount++}`);
+          params.push(date);
+        }
+
         if (symbol !== undefined) {
           updates.push(`symbol = $${paramCount++}`);
           params.push(symbol);
+        }
+
+        if (trade_type !== undefined) {
+          updates.push(`trade_type = $${paramCount++}`);
+          params.push(trade_type);
+        }
+
+        if (position_size !== undefined) {
+          updates.push(`position_size = $${paramCount++}`);
+          params.push(position_size);
         }
 
         if (entry_price !== undefined) {
@@ -538,6 +557,11 @@ router.put(
           }
           updates.push(`status = $${paramCount++}`);
           params.push(status);
+        }
+
+        if (realized_pnl !== undefined) {
+          updates.push(`realized_pnl = $${paramCount++}`);
+          params.push(realized_pnl === null || realized_pnl === "" ? null : parseFloat(realized_pnl));
         }
 
         if (updates.length > 0) {

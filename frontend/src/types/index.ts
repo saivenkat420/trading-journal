@@ -4,7 +4,7 @@ export interface Trade {
   id: string;
   symbol: string;
   asset_class: string;
-  trade_type: 'long' | 'short';
+  trade_type: "long" | "short";
   position_size: number;
   entry_price: number | null;
   exit_price?: number;
@@ -16,7 +16,7 @@ export interface Trade {
   strategy_description?: string;
   notes?: string;
   reflection?: string;
-  status: 'open' | 'closed' | 'reviewed';
+  status: "open" | "closed" | "reviewed";
   tags?: Tag[];
   accounts?: Array<{ account_id: string; pnl: number }>;
   session?: string;
@@ -29,6 +29,8 @@ export interface Trade {
   face_value?: number;
   interest?: number;
   unit_size?: number;
+  /** When set, displayed as P/L instead of calculated value (manual override) */
+  realized_pnl?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -96,4 +98,3 @@ export interface DashboardStats {
   total_wins: number;
   total_losses: number;
 }
-

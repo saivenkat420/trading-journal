@@ -12,12 +12,26 @@ import {
   SearchFiltersType,
 } from "../components";
 
+type InlineEditDraft = {
+  date: string;
+  symbol: string;
+  trade_type: "long" | "short";
+  position_size: number;
+  entry_price: number | "";
+  exit_price: number | "";
+  realized_pnl: number | "";
+  status: "open" | "closed" | "reviewed";
+};
+
 function TradeLog() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [filteredTrades, setFilteredTrades] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<SearchFiltersType>({});
+  const [editingTradeId, setEditingTradeId] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState<InlineEditDraft | null>(null);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadTrades();
@@ -108,6 +122,66 @@ function TradeLog() {
     return "text-dark-text-secondary";
   };
 
+  const startEdit = (trade: Trade) => {
+    const displayPnl =
+      trade.realized_pnl != null ? trade.realized_pnl : calculateTradePnl(trade);
+    setEditingTradeId(trade.id);
+    setEditingDraft({
+      date: new Date(trade.date).toISOString().slice(0, 10),
+      symbol: trade.symbol,
+      trade_type: trade.trade_type,
+      position_size: trade.position_size,
+      entry_price: trade.entry_price ?? "",
+      exit_price: trade.exit_price ?? "",
+      realized_pnl: displayPnl,
+      status: trade.status,
+    });
+    setError(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingTradeId(null);
+    setEditingDraft(null);
+  };
+
+  const saveEdit = async () => {
+    if (!editingTradeId || !editingDraft) return;
+    setSavingId(editingTradeId);
+    setError(null);
+    try {
+      const { data } = await tradesApi.update(editingTradeId, {
+        date: editingDraft.date,
+        symbol: editingDraft.symbol,
+        trade_type: editingDraft.trade_type,
+        position_size: editingDraft.position_size,
+        entry_price: editingDraft.entry_price === "" ? null : Number(editingDraft.entry_price),
+        exit_price: editingDraft.exit_price === "" ? null : Number(editingDraft.exit_price),
+        realized_pnl:
+          editingDraft.realized_pnl === "" ? null : Number(editingDraft.realized_pnl),
+        status: editingDraft.status,
+      });
+      setTrades((prev) =>
+        prev.map((t) => (t.id === editingTradeId ? { ...t, ...data.data } : t))
+      );
+      setEditingTradeId(null);
+      setEditingDraft(null);
+    } catch (err: any) {
+      setError(
+        err?.response?.data?.error?.message || "Failed to update trade"
+      );
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const updateDraft = <K extends keyof InlineEditDraft>(
+    field: K,
+    value: InlineEditDraft[K]
+  ) => {
+    if (!editingDraft) return;
+    setEditingDraft({ ...editingDraft, [field]: value });
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -185,72 +259,230 @@ function TradeLog() {
               <tbody>
                 {filteredTrades.map((trade) => {
                   const pnl = calculateTradePnl(trade);
+                  const isEditing = editingTradeId === trade.id;
+                  const draft = isEditing ? editingDraft! : null;
+                  const inputClass =
+                    "w-full min-w-0 px-2 py-1.5 text-xs sm:text-sm rounded border border-dark-border-primary bg-dark-bg-primary text-dark-text-primary focus:ring-1 focus:ring-dark-accent-primary focus:border-dark-accent-primary";
+
                   return (
                     <tr
                       key={trade.id}
-                      className="border-b border-dark-border-primary hover:bg-dark-bg-tertiary transition-colors duration-150"
+                      className={`border-b border-dark-border-primary transition-colors duration-150 ${
+                        isEditing ? "bg-dark-bg-tertiary" : "hover:bg-dark-bg-tertiary"
+                      }`}
                     >
                       <td className="py-3 px-2 sm:px-4 text-dark-text-primary whitespace-nowrap text-xs sm:text-sm">
-                        {new Date(trade.date).toLocaleDateString()}
+                        {isEditing && draft ? (
+                          <input
+                            type="date"
+                            value={draft.date}
+                            onChange={(e) => updateDraft("date", e.target.value)}
+                            className={inputClass}
+                            aria-label="Trade date"
+                          />
+                        ) : (
+                          new Date(trade.date).toLocaleDateString()
+                        )}
                       </td>
                       <td className="py-3 px-2 sm:px-4">
-                        <span className="font-medium text-dark-text-primary text-xs sm:text-sm">
-                          {trade.symbol}
-                        </span>
+                        {isEditing && draft ? (
+                          <input
+                            type="text"
+                            value={draft.symbol}
+                            onChange={(e) => updateDraft("symbol", e.target.value)}
+                            className={inputClass}
+                            placeholder="Symbol"
+                            aria-label="Symbol"
+                          />
+                        ) : (
+                          <span className="font-medium text-dark-text-primary text-xs sm:text-sm">
+                            {trade.symbol}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-2 sm:px-4">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            trade.trade_type === "long"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}
-                        >
-                          {trade.trade_type.toUpperCase()}
-                        </span>
+                        {isEditing && draft ? (
+                          <select
+                            value={draft.trade_type}
+                            onChange={(e) =>
+                              updateDraft("trade_type", e.target.value as "long" | "short")
+                            }
+                            className={inputClass}
+                            aria-label="Trade type"
+                          >
+                            <option value="long">LONG</option>
+                            <option value="short">SHORT</option>
+                          </select>
+                        ) : (
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              trade.trade_type === "long"
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-red-500/20 text-red-400"
+                            }`}
+                          >
+                            {trade.trade_type.toUpperCase()}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-2 sm:px-4 text-dark-text-primary text-xs sm:text-sm hidden md:table-cell">
-                        {trade.position_size}
+                        {isEditing && draft ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={draft.position_size}
+                            onChange={(e) =>
+                              updateDraft("position_size", parseFloat(e.target.value) || 0)
+                            }
+                            className={inputClass}
+                            aria-label="Position size"
+                          />
+                        ) : (
+                          trade.position_size
+                        )}
                       </td>
                       <td className="py-3 px-2 sm:px-4 text-dark-text-primary text-xs sm:text-sm hidden lg:table-cell">
-                        {trade.entry_price !== null &&
-                        trade.entry_price !== undefined
-                          ? formatCurrency(trade.entry_price)
-                          : "-"}
+                        {isEditing && draft ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={draft.entry_price}
+                            onChange={(e) =>
+                              updateDraft(
+                                "entry_price",
+                                e.target.value === "" ? "" : parseFloat(e.target.value)
+                              )
+                            }
+                            className={inputClass}
+                            placeholder="—"
+                            aria-label="Entry price"
+                          />
+                        ) : trade.entry_price !== null &&
+                          trade.entry_price !== undefined ? (
+                          formatCurrency(trade.entry_price)
+                        ) : (
+                          "-"
+                        )}
                       </td>
                       <td className="py-3 px-2 sm:px-4 text-dark-text-primary text-xs sm:text-sm hidden lg:table-cell">
-                        {trade.exit_price !== undefined &&
-                        trade.exit_price !== null
-                          ? formatCurrency(trade.exit_price)
-                          : "-"}
+                        {isEditing && draft ? (
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            value={draft.exit_price}
+                            onChange={(e) =>
+                              updateDraft(
+                                "exit_price",
+                                e.target.value === "" ? "" : parseFloat(e.target.value)
+                              )
+                            }
+                            className={inputClass}
+                            placeholder="—"
+                            aria-label="Exit price"
+                          />
+                        ) : trade.exit_price !== undefined &&
+                          trade.exit_price !== null ? (
+                          formatCurrency(trade.exit_price)
+                        ) : (
+                          "-"
+                        )}
                       </td>
                       <td
                         className={`py-3 px-2 sm:px-4 font-semibold text-xs sm:text-sm ${getPnlColor(
                           pnl
                         )}`}
                       >
-                        {formatCurrency(pnl)}
+                        {isEditing && draft ? (
+                          <input
+                            type="number"
+                            step="any"
+                            value={draft.realized_pnl}
+                            onChange={(e) =>
+                              updateDraft(
+                                "realized_pnl",
+                                e.target.value === ""
+                                  ? ""
+                                  : parseFloat(e.target.value)
+                              )
+                            }
+                            className={inputClass}
+                            aria-label="P/L"
+                          />
+                        ) : (
+                          formatCurrency(pnl)
+                        )}
                       </td>
                       <td className="py-3 px-2 sm:px-4 hidden sm:table-cell">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            trade.status === "closed"
-                              ? "bg-dark-accent-success/20 text-dark-accent-success"
-                              : trade.status === "open"
-                              ? "bg-dark-accent-warning/20 text-dark-accent-warning"
-                              : "bg-dark-bg-tertiary text-dark-text-secondary"
-                          }`}
-                        >
-                          {trade.status}
-                        </span>
+                        {isEditing && draft ? (
+                          <select
+                            value={draft.status}
+                            onChange={(e) =>
+                              updateDraft(
+                                "status",
+                                e.target.value as "open" | "closed" | "reviewed"
+                              )
+                            }
+                            className={inputClass}
+                            aria-label="Status"
+                          >
+                            <option value="open">open</option>
+                            <option value="closed">closed</option>
+                            <option value="reviewed">reviewed</option>
+                          </select>
+                        ) : (
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              trade.status === "closed"
+                                ? "bg-dark-accent-success/20 text-dark-accent-success"
+                                : trade.status === "open"
+                                ? "bg-dark-accent-warning/20 text-dark-accent-warning"
+                                : "bg-dark-bg-tertiary text-dark-text-secondary"
+                            }`}
+                          >
+                            {trade.status}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-2 sm:px-4">
-                        <Link
-                          to={`/trade/${trade.id}`}
-                          className="text-dark-accent-primary hover:text-blue-400 text-xs sm:text-sm font-medium transition-colors"
-                        >
-                          View
-                        </Link>
+                        {isEditing ? (
+                          <span className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={saveEdit}
+                              disabled={savingId === trade.id}
+                              className="text-dark-accent-success hover:text-green-400 text-xs sm:text-sm font-medium transition-colors disabled:opacity-50"
+                            >
+                              {savingId === trade.id ? "Saving…" : "Save"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              disabled={savingId === trade.id}
+                              className="text-dark-text-secondary hover:text-dark-text-primary text-xs sm:text-sm font-medium transition-colors disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(trade)}
+                              className="text-dark-accent-primary hover:text-blue-400 text-xs sm:text-sm font-medium transition-colors mr-2"
+                            >
+                              Edit
+                            </button>
+                            <Link
+                              to={`/trade/${trade.id}`}
+                              className="text-dark-accent-primary hover:text-blue-400 text-xs sm:text-sm font-medium transition-colors"
+                            >
+                              View
+                            </Link>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
