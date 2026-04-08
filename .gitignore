@@ -177,3 +177,6 @@ docs/.doctrees/
 *.backup
 *.old
 *~
+
+
+/docs

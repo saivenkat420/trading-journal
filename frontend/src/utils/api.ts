@@ -89,14 +89,19 @@ export const strategiesApi = {
 // Tags
 export const tagsApi = {
   getAll: () => api.get('/tags'),
-  create: (data: any) => api.post('/tags', data)
+  getById: (id: string) => api.get(`/tags/${id}`),
+  create: (data: any) => api.post('/tags', data),
+  update: (id: string, data: any) => api.put(`/tags/${id}`, data),
+  delete: (id: string) => api.delete(`/tags/${id}`)
 };
 
 // Trading Rules
 export const tradingRulesApi = {
   getAll: (params?: any) => api.get('/trading-rules', { params }),
+  getById: (id: string) => api.get(`/trading-rules/${id}`),
   create: (data: any) => api.post('/trading-rules', data),
-  update: (id: string, data: any) => api.put(`/trading-rules/${id}`, data)
+  update: (id: string, data: any) => api.put(`/trading-rules/${id}`, data),
+  delete: (id: string) => api.delete(`/trading-rules/${id}`)
 };
 
 // Analysis
@@ -110,7 +115,8 @@ export const analysisApi = {
   update: (id: string, data: any) =>
     api.put(`/analysis/${id}`, data, {
       headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : undefined
-    })
+    }),
+  delete: (id: string) => api.delete(`/analysis/${id}`)
 };
 
 // Goals
@@ -159,6 +165,26 @@ export const filesApi = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   delete: (id: string) => api.delete(`/files/${id}`)
+};
+
+// Account Transactions
+export const accountTransactionsApi = {
+  getByAccount: (accountId: string) => api.get(`/account-transactions/account/${accountId}`),
+  getById: (id: string) => api.get(`/account-transactions/${id}`),
+  create: (data: any) => api.post('/account-transactions', data),
+  update: (id: string, data: any) => api.put(`/account-transactions/${id}`, data),
+  delete: (id: string) => api.delete(`/account-transactions/${id}`)
+};
+
+// AI Insights
+export const aiApi = {
+  getPatterns: (refresh = false) => api.get('/ai/patterns', { params: { refresh } }),
+  getSentiment: (refresh = false) => api.get('/ai/sentiment', { params: { refresh } }),
+  getRecommendations: (refresh = false) => api.get('/ai/recommendations', { params: { refresh } }),
+  predict: (data: any) => api.post('/ai/predict', data),
+  getModelStats: () => api.get('/ai/model-stats'),
+  getAllInsights: (refresh = false) => api.get('/ai/insights', { params: { refresh } }),
+  clearCache: () => api.delete('/ai/cache')
 };
 
 export default api;

@@ -18,12 +18,18 @@ import Insights from "./pages/Insights";
 import Analysis from "./pages/Analysis";
 import AnalysisDetail from "./pages/AnalysisDetail";
 import TradingLab from "./pages/TradingLab";
+import TradingRules from "./pages/TradingRules";
+import Tags from "./pages/Tags";
+import Settings from "./pages/Settings";
 import Goals from "./pages/Goals";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import TradeDetail from "./pages/TradeDetail";
 import Accounts from "./pages/Accounts";
+import AccountTransactions from "./pages/AccountTransactions";
+import Reports from "./pages/Reports";
+import AIInsights from "./pages/AIInsights";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -46,10 +52,13 @@ function Navbar() {
     { to: "/trade-log", label: "Trade Log" },
     { to: "/add-trade", label: "Add Trade" },
     { to: "/insights", label: "Insights" },
+    { to: "/ai-insights", label: "AI Insights" },
     { to: "/analysis", label: "Analysis" },
     { to: "/trading-lab", label: "Trading Lab" },
+    { to: "/trading-rules", label: "Rules" },
     { to: "/goals", label: "Goals" },
     { to: "/accounts", label: "Accounts" },
+    { to: "/reports", label: "Reports" },
   ];
 
   return (
@@ -99,6 +108,20 @@ function Navbar() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             {user ? (
               <>
+                <Link
+                  to="/tags"
+                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors hidden lg:block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Tags
+                </Link>
+                <Link
+                  to="/settings"
+                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors hidden lg:block"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Settings
+                </Link>
                 <Link
                   to="/profile"
                   className="text-dark-text-secondary hover:text-dark-text-primary px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors truncate max-w-[120px] sm:max-w-none"
@@ -152,6 +175,30 @@ function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              <div className="border-t border-dark-border-primary my-2 pt-2">
+                <Link
+                  to="/tags"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 block ${
+                    isActive("/tags")
+                      ? "bg-dark-accent-primary text-white shadow-lg shadow-dark-accent-primary/20"
+                      : "text-dark-text-secondary hover:text-dark-text-primary hover:bg-dark-bg-tertiary"
+                  }`}
+                >
+                  Tags
+                </Link>
+                <Link
+                  to="/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 block ${
+                    isActive("/settings")
+                      ? "bg-dark-accent-primary text-white shadow-lg shadow-dark-accent-primary/20"
+                      : "text-dark-text-secondary hover:text-dark-text-primary hover:bg-dark-bg-tertiary"
+                  }`}
+                >
+                  Settings
+                </Link>
+              </div>
             </div>
           </div>
         )}
@@ -280,6 +327,54 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <Accounts />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/accounts/:accountId/transactions"
+            element={
+              <ProtectedRoute>
+                <AccountTransactions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/trading-rules"
+            element={
+              <ProtectedRoute>
+                <TradingRules />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tags"
+            element={
+              <ProtectedRoute>
+                <Tags />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ai-insights"
+            element={
+              <ProtectedRoute>
+                <AIInsights />
               </ProtectedRoute>
             }
           />

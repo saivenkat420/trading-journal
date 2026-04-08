@@ -13,4 +13,5 @@ export { SearchFilters } from './SearchFilters';
 export type { SearchFilters as SearchFiltersType } from './SearchFilters';
 export { ErrorBoundary } from './ErrorBoundary';
 export { default as RichTextEditor } from './RichTextEditor';
+export { default as PredictionWidget } from './PredictionWidget';
 

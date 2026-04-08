@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { accountsApi } from "../utils/api";
 import {
   Button,
@@ -385,23 +386,30 @@ function Accounts() {
                     )}
                   </p>
                 </div>
-                <div className="flex gap-2 pt-4 border-t border-dark-border-primary">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleEdit(account)}
-                    className="flex-1"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDelete(account.id, account.name)}
-                    className="flex-1"
-                  >
-                    Delete
-                  </Button>
+                <div className="flex flex-col gap-2 pt-4 border-t border-dark-border-primary">
+                  <Link to={`/accounts/${account.id}/transactions`}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      Transactions
+                    </Button>
+                  </Link>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleEdit(account)}
+                      className="flex-1"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(account.id, account.name)}
+                      className="flex-1"
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>

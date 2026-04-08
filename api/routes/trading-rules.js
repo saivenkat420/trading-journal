@@ -109,4 +109,31 @@ router.put(
   }
 );
 
+// Delete trading rule
+router.delete(
+  "/:id",
+  validateUUID("id"),
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId;
+
+      // Verify ownership
+      const owns = await verifyOwnership(query, "trading_rules", id, userId);
+      if (!owns) {
+        throw new AppError("NOT_FOUND", "Trading rule not found", 404);
+      }
+
+      await query(
+        "DELETE FROM trading_rules WHERE id = $1 AND user_id = $2",
+        [id, userId]
+      );
+
+      res.json({ message: "Trading rule deleted successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
 export default router;

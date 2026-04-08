@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
-import { strategiesApi, tradesApi, accountsApi } from "../utils/api";
+import { strategiesApi, tradesApi, accountsApi, tagsApi } from "../utils/api";
+import { Tag } from "../types";
 import {
   Button,
   Input,
@@ -10,12 +11,15 @@ import {
   Card,
   ErrorMessage,
   LoadingSpinner,
+  PredictionWidget,
 } from "../components";
 
 function AddTrade() {
   const navigate = useNavigate();
   const [strategies, setStrategies] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
   const [accountPnls, setAccountPnls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -68,12 +72,14 @@ function AddTrade() {
   const loadOptions = async () => {
     try {
       setLoadingOptions(true);
-      const [strategiesRes, accountsRes] = await Promise.all([
+      const [strategiesRes, accountsRes, tagsRes] = await Promise.all([
         strategiesApi.getAll(),
         accountsApi.getAll(),
+        tagsApi.getAll(),
       ]);
       setStrategies(strategiesRes.data.data);
       setAccounts(accountsRes.data.data || []);
+      setTags(tagsRes.data.data || []);
     } catch (error: any) {
       console.error("Error loading options:", error);
       setError(
@@ -81,6 +87,14 @@ function AddTrade() {
       );
     } finally {
       setLoadingOptions(false);
+    }
+  };
+
+  const handleTagToggle = (tagId: string) => {
+    if (selectedTagIds.includes(tagId)) {
+      setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
+    } else {
+      setSelectedTagIds([...selectedTagIds, tagId]);
     }
   };
 
@@ -296,6 +310,11 @@ function AddTrade() {
             JSON.stringify(accountPnlsToSend)
           );
         }
+      }
+
+      // Add tags if selected
+      if (selectedTagIds.length > 0) {
+        formDataToSend.append("tag_ids", JSON.stringify(selectedTagIds));
       }
 
       // Add files
@@ -573,6 +592,17 @@ function AddTrade() {
             />
           </div>
 
+          {/* AI Prediction Widget */}
+          <PredictionWidget
+            tradeData={{
+              session: formData.session,
+              trade_type: formData.trade_type,
+              asset_class: formData.asset_class,
+              confidence_level: formData.confidence_level,
+              date: formData.date,
+            }}
+          />
+
           <div>
             <label className="block text-sm font-medium text-dark-text-secondary mb-3">
               Confidence Level *
@@ -619,6 +649,46 @@ function AddTrade() {
               })}
             </div>
           </div>
+
+          {/* Tags Selection */}
+          {tags.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-dark-text-secondary mb-3">
+                Tags{" "}
+                <span className="text-dark-text-tertiary text-xs">
+                  (Optional - for categorization)
+                </span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => {
+                  const isSelected = selectedTagIds.includes(tag.id);
+                  return (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => handleTagToggle(tag.id)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        isSelected
+                          ? "ring-2 ring-white ring-offset-2 ring-offset-dark-bg-primary"
+                          : "opacity-70 hover:opacity-100"
+                      }`}
+                      style={{
+                        backgroundColor: tag.color || "#3b82f6",
+                        color: "white",
+                      }}
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedTagIds.length > 0 && (
+                <p className="mt-2 text-xs text-dark-text-tertiary">
+                  {selectedTagIds.length} tag{selectedTagIds.length !== 1 ? "s" : ""} selected
+                </p>
+              )}
+            </div>
+          )}
 
           <Textarea
             label="Before and During Trades"

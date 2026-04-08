@@ -20,6 +20,7 @@ import goalsRouter from "./routes/goals.js";
 import settingsRouter from "./routes/settings.js";
 import filesRouter from "./routes/files.js";
 import accountTransactionsRouter from "./routes/account-transactions.js";
+import aiRouter from "./routes/ai.js";
 
 // Load environment variables
 dotenv.config();
@@ -153,6 +154,7 @@ app.use("/api/goals", goalsRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/files", filesRouter);
 app.use("/api/account-transactions", accountTransactionsRouter);
+app.use("/api/ai", aiRouter);
 
 // Default route - provides basic info and documentation links
 app.get("/", (req, res) => {
