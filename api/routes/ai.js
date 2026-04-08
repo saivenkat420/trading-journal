@@ -4,7 +4,7 @@
  */
 
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 import pool from '../db.js';
 import { analyzePatterns } from '../services/patternRecognition.js';
 import { analyzeSentiment } from '../services/sentimentAnalysis.js';
@@ -14,7 +14,7 @@ import { predictOutcome, getModelStats } from '../services/tradePrediction.js';
 const router = express.Router();
 
 // All routes require authentication
-router.use(authenticateToken);
+router.use(authenticate);
 
 /**
  * Helper function to get user's trades
