@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { analyticsApi } from "../utils/api";
 import { Card, LoadingSpinner } from "../components";
+import { formatCurrency, formatWithUserDate } from "../utils/userSettings";
 
 function Insights() {
   const [insights, setInsights] = useState<any>(null);
@@ -19,14 +20,6 @@ function Insights() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
   };
 
   if (loading) {
@@ -179,7 +172,7 @@ function Insights() {
               <div>
                 <p className="text-sm text-dark-text-secondary mb-1">Date</p>
                 <p className="text-dark-text-primary">
-                  {new Date(insights.best_trade.date).toLocaleDateString()}
+                  {formatWithUserDate(insights.best_trade.date)}
                 </p>
               </div>
             </div>
@@ -208,7 +201,7 @@ function Insights() {
               <div>
                 <p className="text-sm text-dark-text-secondary mb-1">Date</p>
                 <p className="text-dark-text-primary">
-                  {new Date(insights.worst_trade.date).toLocaleDateString()}
+                  {formatWithUserDate(insights.worst_trade.date)}
                 </p>
               </div>
             </div>

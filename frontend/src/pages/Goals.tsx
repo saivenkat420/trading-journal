@@ -9,13 +9,7 @@ import {
   ErrorMessage,
   SuccessMessage,
 } from "../components";
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(value);
+import { formatCurrency } from "../utils/userSettings";
 
 const formatGoalCurrency = (value?: number | null) =>
   value === undefined || value === null ? "—" : formatCurrency(value);

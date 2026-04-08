@@ -40,3 +40,13 @@ export const uploadLimiter = rateLimit({
   },
 });
 
+// Apply upload limiter only when the client is sending multipart (actual file uploads).
+// JSON-only trade create/update must not consume the upload budget.
+export function uploadLimiterOnlyWhenMultipart(req, res, next) {
+  const ct = req.headers["content-type"] || "";
+  if (ct.includes("multipart/form-data")) {
+    return uploadLimiter(req, res, next);
+  }
+  next();
+}
+

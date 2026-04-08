@@ -3,6 +3,10 @@ import { tradesApi, analyticsApi, accountsApi } from "../utils/api";
 import { Trade, DashboardStats } from "../types";
 import { calculateTradePnl } from "../utils/pnlCalculator";
 import {
+  formatCurrency as formatUserCurrency,
+  formatWithUserDate,
+} from "../utils/userSettings";
+import {
   Card,
   LoadingSpinner,
   Button,
@@ -35,12 +39,24 @@ function Reports() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [tradesRes, statsRes, accountsRes] = await Promise.all([
-        tradesApi.getAll({ limit: 10000 }),
+      const [statsRes, accountsRes] = await Promise.all([
         analyticsApi.getDashboard({}),
         accountsApi.getAll(),
       ]);
-      setTrades(tradesRes.data.data || []);
+      const pageSize = 1000;
+      let offset = 0;
+      let total = 0;
+      let allTrades: Trade[] = [];
+
+      do {
+        const tradesRes = await tradesApi.getAll({ limit: pageSize, offset });
+        const pageTrades = tradesRes.data.data || [];
+        total = Number(tradesRes.data.total || 0);
+        allTrades = allTrades.concat(pageTrades);
+        offset += pageSize;
+      } while (offset < total);
+
+      setTrades(allTrades);
       setStats(statsRes.data.data);
       setAccounts(accountsRes.data.data || []);
     } catch (err: any) {
@@ -101,7 +117,7 @@ function Reports() {
       const rows = filteredTrades.map((trade) => {
         const pnl = calculateTradePnl(trade);
         return [
-          new Date(trade.date).toLocaleDateString(),
+          formatWithUserDate(trade.date),
           trade.symbol,
           trade.asset_class,
           trade.trade_type,
@@ -300,7 +316,7 @@ function Reports() {
           const pnl = calculateTradePnl(trade);
           return `
         <tr>
-          <td>${new Date(trade.date).toLocaleDateString()}</td>
+          <td>${formatWithUserDate(trade.date)}</td>
           <td>${trade.symbol}</td>
           <td>${trade.trade_type.toUpperCase()}</td>
           <td>${trade.entry_price ?? "-"}</td>
@@ -388,14 +404,6 @@ function Reports() {
     } finally {
       setExporting(null);
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
   };
 
   if (loading) {
@@ -650,7 +658,7 @@ function Reports() {
                     : "text-dark-accent-danger"
                 }`}
               >
-                {formatCurrency(stats.net_pl)}
+                {formatUserCurrency(stats.net_pl)}
               </p>
             </div>
             <div className="text-center p-4 bg-dark-bg-tertiary rounded-lg">

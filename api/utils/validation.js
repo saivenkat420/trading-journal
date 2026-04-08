@@ -477,7 +477,19 @@ export const schemas = {
     }),
 
     // Valid setting keys
-    validKeys: ["theme", "trader_nickname", "default_account"],
+    validKeys: [
+      "theme",
+      "nickname",
+      "default_asset_class",
+      "default_session",
+      "currency",
+      "date_format",
+      "default_point_value",
+      "default_contract_size",
+      // Legacy keys kept for compatibility with existing saved data
+      "trader_nickname",
+      "default_account",
+    ],
   },
 
   // User management schemas

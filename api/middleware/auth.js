@@ -2,6 +2,9 @@
 import { verifyToken } from "../utils/jwt.js";
 import { AppError } from "../utils/errors.js";
 
+const UUID_V4_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 // Verify JWT token
 export function authenticate(req, res, next) {
   try {
@@ -42,11 +45,13 @@ export function authenticate(req, res, next) {
 
       return next();
     } catch (jwtError) {
-      // If JWT verification fails, check if it's a simple token (development only)
+      // Development fallback: only allow direct UUID user id tokens.
       if (process.env.NODE_ENV === "development") {
-        req.userId = token;
-        req.user = { id: token };
-        return next();
+        if (UUID_V4_REGEX.test(token)) {
+          req.userId = token;
+          req.user = { id: token };
+          return next();
+        }
       }
       throw new AppError("UNAUTHORIZED", "Invalid or expired token", 401);
     }

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { tradesApi } from "../utils/api";
 import { Trade } from "../types";
 import { calculateTradePnl } from "../utils/pnlCalculator";
+import { formatCurrency, formatWithUserDate } from "../utils/userSettings";
 import {
   Button,
   Card,
@@ -104,14 +105,6 @@ function TradeLog() {
   const handleReset = () => {
     setActiveFilters({});
     loadTrades({});
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
   };
 
   // Use the centralized P/L calculator from utils/pnlCalculator
@@ -281,7 +274,7 @@ function TradeLog() {
                             aria-label="Trade date"
                           />
                         ) : (
-                          new Date(trade.date).toLocaleDateString()
+                          formatWithUserDate(trade.date)
                         )}
                       </td>
                       <td className="py-3 px-2 sm:px-4">

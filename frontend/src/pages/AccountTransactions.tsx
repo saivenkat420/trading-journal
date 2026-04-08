@@ -11,6 +11,7 @@ import {
   ErrorMessage,
   SuccessMessage,
 } from "../components";
+import { formatCurrency, formatWithUserDate } from "../utils/userSettings";
 
 interface Transaction {
   id: string;
@@ -169,14 +170,6 @@ function AccountTransactions() {
         err?.response?.data?.error?.message || "Failed to delete transaction"
       );
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
   };
 
   const getTypeColor = (_type: string, amount: number) => {
@@ -411,9 +404,7 @@ function AccountTransactions() {
                     className="border-b border-dark-border-primary hover:bg-dark-bg-tertiary transition-colors"
                   >
                     <td className="py-3 px-4 text-sm text-dark-text-primary">
-                      {new Date(
-                        transaction.transaction_date
-                      ).toLocaleDateString()}
+                      {formatWithUserDate(transaction.transaction_date)}
                     </td>
                     <td className="py-3 px-4">
                       <span

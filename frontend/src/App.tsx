@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 
 import {
@@ -30,12 +30,14 @@ import Accounts from "./pages/Accounts";
 import AccountTransactions from "./pages/AccountTransactions";
 import Reports from "./pages/Reports";
 import AIInsights from "./pages/AIInsights";
+import { getSetting } from "./utils/userSettings";
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const nickname = getSetting("nickname");
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -63,13 +65,13 @@ function Navbar() {
 
   return (
     <nav className="bg-dark-bg-secondary border-b border-dark-border-primary sticky top-0 z-50 backdrop-blur-sm bg-opacity-90">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+        <div className="flex justify-between items-center h-14">
           <div className="flex items-center">
             {user && (
               <>
                 {/* Desktop Navigation */}
-                <div className="hidden md:flex items-center space-x-1">
+                <div className="hidden md:flex items-center space-x-0.5">
                   {navLinks.map((link) => (
                     <NavLink
                       key={link.to}
@@ -105,36 +107,36 @@ function Navbar() {
               </>
             )}
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5">
             {user ? (
               <>
                 <Link
                   to="/tags"
-                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors hidden lg:block"
+                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors hidden lg:block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Tags
                 </Link>
                 <Link
                   to="/settings"
-                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors hidden lg:block"
+                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors hidden lg:block"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Settings
                 </Link>
                 <Link
                   to="/profile"
-                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors truncate max-w-[120px] sm:max-w-none"
+                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 sm:px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors truncate max-w-[120px] sm:max-w-none"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <span className="hidden sm:inline">
-                    {user.username || user.email}
+                    {nickname || user.username || user.email}
                   </span>
                   <span className="sm:hidden">Profile</span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors"
+                  className="text-dark-text-secondary hover:text-dark-text-primary px-2 sm:px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors"
                 >
                   Logout
                 </button>
@@ -221,7 +223,7 @@ function NavLink({
     <Link
       to={to}
       className={`
-        px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200
+        px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
         ${
           isActive
             ? "bg-dark-accent-primary text-white shadow-lg shadow-dark-accent-primary/20"
@@ -235,6 +237,13 @@ function NavLink({
 }
 
 function AppContent() {
+  useEffect(() => {
+    const theme = getSetting("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const useDark = theme === "dark" || (theme === "system" && prefersDark);
+    document.documentElement.style.colorScheme = useDark ? "dark" : "light";
+  }, []);
+
   return (
     <div className="min-h-screen bg-dark-bg-primary flex flex-col">
       <Navbar />

@@ -3,6 +3,7 @@ import DOMPurify from "dompurify";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { tradesApi, strategiesApi, default as api, API_BASE_URL } from "../utils/api";
 import { calculateTradePnl } from "../utils/pnlCalculator";
+import { formatCurrency, formatWithUserDate } from "../utils/userSettings";
 import {
   Button,
   Input,
@@ -290,14 +291,6 @@ function TradeDetail() {
         "Failed to delete file"
       );
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
   };
 
   const getFileUrl = (filePath: string) => {
@@ -677,7 +670,7 @@ function TradeDetail() {
                 <div>
                   <span className="text-sm text-dark-text-secondary">Date</span>
                   <p className="text-dark-text-primary">
-                    {new Date(trade.date).toLocaleDateString()}
+                    {formatWithUserDate(trade.date)}
                   </p>
                 </div>
                 <div>

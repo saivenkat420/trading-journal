@@ -181,6 +181,31 @@ Currently, authentication is a placeholder. In production, you should:
 
 For development, you can pass `x-user-id` header to simulate user context.
 
+## Seed Test Data For Existing User
+
+Use the one-off seed script to append realistic test data to a real account through API endpoints.
+
+From `api/`:
+
+```bash
+set SEED_API_BASE_URL=http://localhost:3000/api
+set SEED_EMAIL=saieleuri@gmail.com
+set SEED_PASSWORD=your-password-here
+set SEED_START=2025-12-01
+set SEED_END=2026-03-31
+set SEED_TRADES=200
+set SEED_MODE=append
+set SEED_LABEL=seed-2026q1
+set SEED_RNG=20260408
+npm run seed:user
+```
+
+Notes:
+- `SEED_MODE` currently supports `append` only.
+- Script is deterministic per `SEED_RNG`.
+- Re-runs are safe: existing trades tagged with `[SEED_LABEL]` in notes are counted and only missing trades are added up to `SEED_TRADES`.
+- Trades are created as **JSON** (`Content-Type: application/json`). No images or files are uploaded; the upload rate limiter applies only to `multipart/form-data` requests.
+
 ## Supabase Integration
 
 The project supports Supabase for database and future features (auth, storage, realtime).

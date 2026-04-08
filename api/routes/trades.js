@@ -4,7 +4,7 @@ import { query, transaction } from "../db.js";
 import { AppError, validateRequired } from "../utils/errors.js";
 import { upload } from "../services/upload.js";
 import { authenticate } from "../middleware/auth.js";
-import { uploadLimiter } from "../middleware/rateLimiter.js";
+import { uploadLimiterOnlyWhenMultipart } from "../middleware/rateLimiter.js";
 import { validate, schemas } from "../utils/validation.js";
 import { validateUUID } from "../middleware/validateParams.js";
 import { sanitizeRequestBody } from "../utils/sanitize.js";
@@ -166,7 +166,7 @@ router.get("/:id", validateUUID("id"), async (req, res, next) => {
 // Create trade
 router.post(
   "/",
-  uploadLimiter,
+  uploadLimiterOnlyWhenMultipart,
   (req, res, next) => {
     upload.array("files", 8)(req, res, (err) => {
       if (err) {
@@ -417,7 +417,7 @@ router.post(
 router.put(
   "/:id",
   validateUUID("id"),
-  uploadLimiter,
+  uploadLimiterOnlyWhenMultipart,
   (req, res, next) => {
     upload.array("files", 8)(req, res, (err) => {
       if (err) {
@@ -638,7 +638,7 @@ router.put(
         }
 
         // Update tags if provided
-        if (tag_ids) {
+        if (tag_ids !== undefined) {
           const parsedTagIds = Array.isArray(tag_ids)
             ? tag_ids
             : JSON.parse(tag_ids);

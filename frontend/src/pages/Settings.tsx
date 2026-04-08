@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { settingsApi } from "../utils/api";
 import {
+  DEFAULT_SETTINGS,
+  saveStoredSettings,
+  getStoredSettings,
+} from "../utils/userSettings";
+import {
   Card,
   LoadingSpinner,
   Button,
@@ -108,6 +113,12 @@ const SETTING_DEFINITIONS: SettingItem[] = [
   },
 ];
 
+const applyThemePreference = (theme: string) => {
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const useDark = theme === "dark" || (theme === "system" && prefersDark);
+  document.documentElement.style.colorScheme = useDark ? "dark" : "light";
+};
+
 function Settings() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -123,29 +134,27 @@ function Settings() {
     try {
       setLoading(true);
       const res = await settingsApi.getAll();
-      const settingsMap: Record<string, string> = {};
-      
-      // Initialize with defaults
-      SETTING_DEFINITIONS.forEach((def) => {
-        settingsMap[def.key] = def.value;
-      });
-      
+      const settingsMap: Record<string, string> = {
+        ...DEFAULT_SETTINGS,
+        ...getStoredSettings(),
+      };
+
       // Override with saved values
-      if (res.data.data && Array.isArray(res.data.data)) {
-        res.data.data.forEach((setting: { key: string; value: string }) => {
-          settingsMap[setting.key] = setting.value;
+      if (res.data.data && typeof res.data.data === "object") {
+        Object.entries(res.data.data).forEach(([key, value]) => {
+          settingsMap[key] = String(value ?? "");
         });
       }
-      
+
       setSettings(settingsMap);
+      saveStoredSettings(settingsMap);
+      applyThemePreference(settingsMap.theme || "dark");
     } catch (err: any) {
       console.error("Error loading settings:", err);
       // Initialize with defaults on error
-      const settingsMap: Record<string, string> = {};
-      SETTING_DEFINITIONS.forEach((def) => {
-        settingsMap[def.key] = def.value;
-      });
+      const settingsMap: Record<string, string> = { ...DEFAULT_SETTINGS };
       setSettings(settingsMap);
+      saveStoredSettings(settingsMap);
     } finally {
       setLoading(false);
     }
@@ -165,6 +174,11 @@ function Settings() {
 
     try {
       await settingsApi.update(key, settings[key]);
+      const merged = { ...getStoredSettings(), [key]: settings[key] };
+      saveStoredSettings(merged);
+      if (key === "theme") {
+        applyThemePreference(settings[key]);
+      }
       setSuccess(`Setting "${key}" saved successfully`);
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Failed to save setting");
@@ -183,6 +197,8 @@ function Settings() {
         settingsApi.update(key, value)
       );
       await Promise.all(promises);
+      saveStoredSettings(settings);
+      applyThemePreference(settings.theme || "dark");
       setSuccess("All settings saved successfully");
     } catch (err: any) {
       setError(err?.response?.data?.error?.message || "Failed to save settings");
@@ -192,11 +208,10 @@ function Settings() {
   };
 
   const handleReset = () => {
-    const defaults: Record<string, string> = {};
-    SETTING_DEFINITIONS.forEach((def) => {
-      defaults[def.key] = def.value;
-    });
+    const defaults: Record<string, string> = { ...DEFAULT_SETTINGS };
     setSettings(defaults);
+    saveStoredSettings(defaults);
+    applyThemePreference(defaults.theme);
     setSuccess("Settings reset to defaults (not saved yet)");
   };
 

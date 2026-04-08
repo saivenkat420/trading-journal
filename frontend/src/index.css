@@ -11,7 +11,7 @@
 
   body {
     font-family: 'Inter', sans-serif; /* Using Inter from Google Fonts */
-    @apply text-dark-text-primary bg-dark-bg-primary; /* Apply dark mode defaults */
+    @apply text-sm text-dark-text-primary bg-dark-bg-primary; /* Apply dark mode defaults */
   }
 
   code {

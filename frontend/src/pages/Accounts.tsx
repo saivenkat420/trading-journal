@@ -9,6 +9,7 @@ import {
   SuccessMessage,
   LoadingSpinner,
 } from "../components";
+import { formatCurrency } from "../utils/userSettings";
 
 function Accounts() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -181,14 +182,6 @@ function Accounts() {
         err?.response?.data?.error?.message || "Failed to delete account"
       );
     }
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
   };
 
   if (loading) {

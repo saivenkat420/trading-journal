@@ -4,6 +4,7 @@ import { analyticsApi, tradesApi, goalsApi, strategiesApi } from "../utils/api";
 import { DashboardStats, Trade } from "../types";
 import { calculateTradePnl } from "../utils/pnlCalculator";
 import { LoadingSpinner, Card, Button, Input, Select } from "../components";
+import { formatCurrency, formatWithUserDate, getSetting } from "../utils/userSettings";
 
 interface TradeFilters {
   query?: string;
@@ -553,14 +554,6 @@ function Dashboard() {
     );
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    }).format(value);
-  };
-
   const getPnlColor = (value: number) => {
     if (value > 0) return "text-dark-accent-success";
     if (value < 0) return "text-dark-accent-danger";
@@ -855,7 +848,7 @@ function Dashboard() {
                   >
                     {new Intl.NumberFormat("en-US", {
                       style: "currency",
-                      currency: "USD",
+                      currency: getSetting("currency"),
                       maximumFractionDigits: 0,
                     }).format(day.pnl)}
                   </div>
@@ -999,7 +992,7 @@ function Dashboard() {
                       className="border-b border-dark-border-primary hover:bg-dark-bg-tertiary transition-colors duration-150"
                     >
                       <td className="py-3 px-2 sm:px-4 text-dark-text-primary text-xs sm:text-sm whitespace-nowrap">
-                        {new Date(trade.date).toLocaleDateString()}
+                        {formatWithUserDate(trade.date)}
                       </td>
                       <td className="py-3 px-2 sm:px-4">
                         <span className="font-medium text-dark-text-primary text-xs sm:text-sm">

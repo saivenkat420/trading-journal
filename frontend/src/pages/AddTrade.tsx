@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import DOMPurify from "dompurify";
 import { strategiesApi, tradesApi, accountsApi, tagsApi } from "../utils/api";
 import { Tag } from "../types";
+import { getSetting } from "../utils/userSettings";
 import {
   Button,
   Input,
@@ -15,6 +16,10 @@ import {
 } from "../components";
 
 function AddTrade() {
+  const defaultAssetClass = getSetting("default_asset_class");
+  const defaultSession = getSetting("default_session");
+  const defaultPointValue = getSetting("default_point_value");
+  const defaultContractSize = getSetting("default_contract_size");
   const navigate = useNavigate();
   const [strategies, setStrategies] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -26,7 +31,7 @@ function AddTrade() {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     symbol: "",
-    asset_class: "futures",
+    asset_class: defaultAssetClass || "futures",
     trade_type: "long",
     status: "closed",
     position_size: "",
@@ -37,11 +42,18 @@ function AddTrade() {
     notes: "",
     reflection: "",
     account_pnls: {} as Record<string, number>,
-    session: "",
+    session: defaultSession || "",
     confidence_level: "",
     fees: "",
-    contract_size: "",
-    point_value: "20", // Default for futures
+    contract_size:
+      (defaultAssetClass === "forex" || defaultAssetClass === "commodity") &&
+      defaultContractSize
+        ? defaultContractSize
+        : "",
+    point_value:
+      defaultAssetClass === "futures" && defaultPointValue
+        ? defaultPointValue
+        : "20",
     unit_size: "",
   });
   const [loadingOptions, setLoadingOptions] = useState(true);
@@ -404,11 +416,11 @@ function AddTrade() {
                 };
 
                 if (newAssetClass === "forex") {
-                  defaults.contract_size = "10"; // Default Contract Size = 10
+                  defaults.contract_size = defaultContractSize || "10";
                 } else if (newAssetClass === "futures") {
-                  defaults.point_value = "20"; // Default Point Value = 20
+                  defaults.point_value = defaultPointValue || "20";
                 } else if (newAssetClass === "commodity") {
-                  defaults.contract_size = "100"; // Default Contract Size = 100
+                  defaults.contract_size = defaultContractSize || "100";
                 }
 
                 setFormData({

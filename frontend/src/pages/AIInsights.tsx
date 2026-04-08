@@ -102,6 +102,43 @@ interface AIInsightsData {
   tradesAnalyzed: number;
 }
 
+const sectionTitleClass = "text-lg font-semibold text-dark-text-primary mb-4";
+const cardItemClass =
+  "p-3 rounded-lg border border-dark-border-primary bg-dark-bg-tertiary hover:bg-dark-bg-elevated transition-colors";
+const metricTextClass = "text-sm text-dark-text-secondary";
+const metaTextClass = "text-xs text-dark-text-tertiary";
+
+const semanticMetricStyles = {
+  positive: "text-dark-accent-success",
+  negative: "text-dark-accent-danger",
+  neutral: "text-dark-text-secondary",
+} as const;
+
+const recommendationCategoryStyles: Record<string, string> = {
+  critical: "border-dark-accent-danger bg-dark-accent-danger/10",
+  strengths: "border-dark-accent-success bg-dark-accent-success/10",
+  warnings: "border-dark-accent-warning bg-dark-accent-warning/10",
+  behavioral: "border-dark-accent-secondary bg-dark-accent-secondary/10",
+  insights: "border-dark-accent-primary bg-dark-accent-primary/10",
+};
+
+const priorityBadgeStyles: Record<string, string> = {
+  critical: "bg-dark-accent-danger/20 text-dark-accent-danger",
+  high: "bg-dark-accent-warning/20 text-dark-accent-warning",
+  medium: "bg-dark-accent-secondary/20 text-dark-accent-secondary",
+  low: "bg-dark-bg-elevated text-dark-text-secondary",
+};
+
+const emotionBarStyles: Record<string, string> = {
+  discipline: "bg-dark-accent-success",
+  overconfidence: "bg-dark-accent-danger",
+  fear: "bg-dark-accent-warning",
+  fomo: "bg-dark-accent-warning",
+  greed: "bg-dark-accent-secondary",
+  revenge: "bg-dark-accent-danger",
+  neutral: "bg-dark-text-tertiary",
+};
+
 export default function AIInsights() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -143,18 +180,18 @@ export default function AIInsights() {
   const modelStats = data?.modelStats;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 text-dark-text-primary">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Trading Insights</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-dark-text-primary">AI Trading Insights</h1>
+          <p className="text-sm text-dark-text-secondary mt-1">
             AI-powered analysis of your trading patterns and behavior
           </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+          className="px-3 py-1.5 bg-dark-accent-primary text-white rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2 text-sm"
         >
           {loading ? (
             <>
@@ -178,50 +215,50 @@ export default function AIInsights() {
       {error && <ErrorMessage message={error} />}
 
       {/* Score Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <Card className="p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Pattern Score</div>
-          <div className="text-3xl font-bold text-blue-600">
+          <div className="text-xs text-dark-text-secondary mb-1">Pattern Score</div>
+          <div className="text-2xl font-bold text-dark-accent-primary">
             {patterns?.patternScore ?? '--'}/100
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-dark-text-tertiary mt-1">
             Based on {patterns?.totalTradesAnalyzed ?? 0} trades
           </div>
         </Card>
 
         <Card className="p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Prediction Model</div>
-          <div className="text-3xl font-bold text-green-600">
+          <div className="text-xs text-dark-text-secondary mb-1">Prediction Model</div>
+          <div className="text-2xl font-bold text-dark-accent-success">
             {modelStats?.ready ? `${modelStats.accuracy}%` : 'Not Ready'}
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-dark-text-tertiary mt-1">
             {modelStats?.ready ? `Trained on ${modelStats.trainedOn} trades` : 'Need more trades'}
           </div>
         </Card>
 
         <Card className="p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Sentiment Score</div>
-          <div className="text-3xl font-bold text-purple-600">
+          <div className="text-xs text-dark-text-secondary mb-1">Sentiment Score</div>
+          <div className="text-2xl font-bold text-dark-accent-secondary">
             {sentiment?.overallSentiment?.score ?? '--'}/100
           </div>
-          <div className="text-xs text-gray-500 mt-1 capitalize">
+          <div className="text-xs text-dark-text-tertiary mt-1 capitalize">
             {sentiment?.overallSentiment?.label?.replace('_', ' ') ?? 'N/A'}
           </div>
         </Card>
 
         <Card className="p-4 text-center">
-          <div className="text-sm text-gray-600 mb-1">Recommendations</div>
-          <div className="text-3xl font-bold text-orange-600">
+          <div className="text-xs text-dark-text-secondary mb-1">Recommendations</div>
+          <div className="text-2xl font-bold text-dark-accent-warning">
             {recommendations?.totalCount ?? 0}
           </div>
-          <div className="text-xs text-gray-500 mt-1">
+          <div className="text-xs text-dark-text-tertiary mt-1">
             {recommendations?.criticalCount ?? 0} critical
           </div>
         </Card>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-dark-border-primary">
         <nav className="flex space-x-8">
           {(['overview', 'patterns', 'sentiment', 'recommendations'] as const).map((tab) => (
             <button
@@ -229,8 +266,8 @@ export default function AIInsights() {
               onClick={() => setActiveTab(tab)}
               className={`py-4 px-1 border-b-2 font-medium text-sm capitalize ${
                 activeTab === tab
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-dark-accent-primary text-dark-accent-primary'
+                  : 'border-transparent text-dark-text-tertiary hover:text-dark-text-secondary hover:border-dark-border-secondary'
               }`}
             >
               {tab}
@@ -255,53 +292,57 @@ function OverviewTab({ patterns, sentiment, recommendations }: { patterns: Patte
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Top Winning Patterns */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Winning Patterns</h3>
+        <h3 className={sectionTitleClass}>Top Winning Patterns</h3>
         {patterns?.winningPatterns && patterns.winningPatterns.length > 0 ? (
           <div className="space-y-3">
             {patterns.winningPatterns.slice(0, 5).map((pattern, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <div key={idx} className={cardItemClass}>
+                <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-gray-900">{pattern.label}</div>
-                  <div className="text-sm text-gray-600">{pattern.totalTrades} trades</div>
+                  <div className="font-medium text-dark-text-primary">{pattern.label}</div>
+                  <div className={metricTextClass}>{pattern.totalTrades} trades</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-green-600">{pattern.winRate.toFixed(1)}%</div>
-                  <div className="text-sm text-gray-600">${pattern.avgPnl.toFixed(2)} avg</div>
+                  <div className={`font-bold ${semanticMetricStyles.positive}`}>{pattern.winRate.toFixed(1)}%</div>
+                  <div className={metricTextClass}>${pattern.avgPnl.toFixed(2)} avg</div>
+                </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No significant patterns detected yet</p>
+          <p className="text-dark-text-tertiary text-center py-4">No significant patterns detected yet</p>
         )}
       </Card>
 
       {/* Patterns to Avoid */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Patterns to Avoid</h3>
+        <h3 className={sectionTitleClass}>Patterns to Avoid</h3>
         {patterns?.losingPatterns && patterns.losingPatterns.length > 0 ? (
           <div className="space-y-3">
             {patterns.losingPatterns.slice(0, 5).map((pattern, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+              <div key={idx} className={cardItemClass}>
+                <div className="flex items-center justify-between">
                 <div>
-                  <div className="font-medium text-gray-900">{pattern.label}</div>
-                  <div className="text-sm text-gray-600">{pattern.totalTrades} trades</div>
+                  <div className="font-medium text-dark-text-primary">{pattern.label}</div>
+                  <div className={metricTextClass}>{pattern.totalTrades} trades</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-red-600">{pattern.winRate.toFixed(1)}%</div>
-                  <div className="text-sm text-gray-600">${pattern.avgPnl.toFixed(2)} avg</div>
+                  <div className={`font-bold ${semanticMetricStyles.negative}`}>{pattern.winRate.toFixed(1)}%</div>
+                  <div className={metricTextClass}>${pattern.avgPnl.toFixed(2)} avg</div>
+                </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No significant losing patterns detected</p>
+          <p className="text-dark-text-tertiary text-center py-4">No significant losing patterns detected</p>
         )}
       </Card>
 
       {/* Critical Recommendations */}
       <Card className="p-6 lg:col-span-2">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Recommendations</h3>
+        <h3 className={sectionTitleClass}>Top Recommendations</h3>
         {recommendations?.all && recommendations.all.length > 0 ? (
           <div className="space-y-4">
             {recommendations.all.slice(0, 4).map((rec, idx) => (
@@ -309,26 +350,26 @@ function OverviewTab({ patterns, sentiment, recommendations }: { patterns: Patte
                 key={idx}
                 className={`p-4 rounded-lg border-l-4 ${
                   rec.priority === 'critical'
-                    ? 'bg-red-50 border-red-500'
+                    ? 'bg-dark-accent-danger/10 border-dark-accent-danger'
                     : rec.category === 'strength'
-                    ? 'bg-green-50 border-green-500'
+                    ? 'bg-dark-accent-success/10 border-dark-accent-success'
                     : rec.category === 'warning'
-                    ? 'bg-yellow-50 border-yellow-500'
-                    : 'bg-blue-50 border-blue-500'
+                    ? 'bg-dark-accent-warning/10 border-dark-accent-warning'
+                    : 'bg-dark-accent-primary/10 border-dark-accent-primary'
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="font-semibold text-gray-900">{rec.title}</h4>
-                    <p className="text-sm text-gray-600 mt-1">{rec.description}</p>
-                    <p className="text-sm font-medium text-gray-700 mt-2">
+                    <h4 className="font-semibold text-dark-text-primary">{rec.title}</h4>
+                    <p className="text-sm text-dark-text-secondary mt-1">{rec.description}</p>
+                    <p className="text-sm font-medium text-dark-text-secondary mt-2">
                       Action: {rec.action}
                     </p>
                   </div>
                   {rec.metric && (
                     <div className="text-right ml-4">
-                      <div className="text-xs text-gray-500">{rec.metric.label}</div>
-                      <div className="font-bold text-gray-900">{rec.metric.value}</div>
+                      <div className={metaTextClass}>{rec.metric.label}</div>
+                      <div className="font-bold text-dark-text-primary">{rec.metric.value}</div>
                     </div>
                   )}
                 </div>
@@ -336,29 +377,29 @@ function OverviewTab({ patterns, sentiment, recommendations }: { patterns: Patte
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No recommendations available yet</p>
+          <p className="text-dark-text-tertiary text-center py-4">No recommendations available yet</p>
         )}
       </Card>
 
       {/* Emotion Correlations */}
       <Card className="p-6 lg:col-span-2">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emotion-Outcome Correlations</h3>
+        <h3 className={sectionTitleClass}>Emotion-Outcome Correlations</h3>
         {sentiment?.correlations ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {Object.entries(sentiment.correlations)
               .filter(([_, data]) => data.count >= 2)
               .map(([emotion, data]) => (
-                <div key={emotion} className="p-4 bg-gray-50 rounded-lg text-center">
-                  <div className="text-sm text-gray-600 capitalize">{emotion}</div>
-                  <div className={`text-2xl font-bold ${data.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                <div key={emotion} className="p-4 bg-dark-bg-tertiary border border-dark-border-primary rounded-lg text-center">
+                  <div className="text-sm text-dark-text-secondary capitalize">{emotion}</div>
+                  <div className={`text-2xl font-bold ${data.winRate >= 50 ? semanticMetricStyles.positive : semanticMetricStyles.negative}`}>
                     {data.winRate.toFixed(1)}%
                   </div>
-                  <div className="text-xs text-gray-500">{data.count} trades</div>
+                  <div className={metaTextClass}>{data.count} trades</div>
                 </div>
               ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">Not enough notes for sentiment analysis</p>
+          <p className="text-dark-text-tertiary text-center py-4">Not enough notes for sentiment analysis</p>
         )}
       </Card>
     </div>
@@ -367,23 +408,23 @@ function OverviewTab({ patterns, sentiment, recommendations }: { patterns: Patte
 
 function PatternsTab({ patterns }: { patterns: PatternAnalysis | null }) {
   if (!patterns) {
-    return <p className="text-gray-500 text-center py-8">No pattern data available</p>;
+    return <p className="text-dark-text-tertiary text-center py-8">No pattern data available</p>;
   }
 
   return (
     <div className="space-y-6">
       {/* Session Analysis */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance by Session</h3>
+        <h3 className={sectionTitleClass}>Performance by Session</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(patterns.sessionAnalysis || {}).map(([session, stats]) => (
-            <div key={session} className="p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600 capitalize mb-2">{session.replace('_', ' ')}</div>
-              <div className={`text-2xl font-bold ${stats.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+            <div key={session} className="p-4 bg-dark-bg-tertiary border border-dark-border-primary rounded-lg">
+              <div className="text-sm text-dark-text-secondary capitalize mb-2">{session.replace('_', ' ')}</div>
+              <div className={`text-2xl font-bold ${stats.winRate >= 50 ? semanticMetricStyles.positive : semanticMetricStyles.negative}`}>
                 {stats.winRate.toFixed(1)}%
               </div>
-              <div className="text-sm text-gray-600">{stats.totalTrades} trades</div>
-              <div className="text-sm text-gray-600">${stats.avgPnl.toFixed(2)} avg</div>
+              <div className="text-sm text-dark-text-secondary">{stats.totalTrades} trades</div>
+              <div className="text-sm text-dark-text-secondary">${stats.avgPnl.toFixed(2)} avg</div>
             </div>
           ))}
         </div>
@@ -391,22 +432,22 @@ function PatternsTab({ patterns }: { patterns: PatternAnalysis | null }) {
 
       {/* Day of Week Analysis */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance by Day</h3>
+        <h3 className={sectionTitleClass}>Performance by Day</h3>
         <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
           {['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].map((day) => {
             const stats = patterns.dayOfWeekAnalysis?.[day];
             return (
-              <div key={day} className="p-3 bg-gray-50 rounded-lg text-center">
-                <div className="text-xs text-gray-600 capitalize">{day.slice(0, 3)}</div>
+              <div key={day} className="p-3 bg-dark-bg-tertiary border border-dark-border-primary rounded-lg text-center">
+                <div className="text-xs text-dark-text-secondary capitalize">{day.slice(0, 3)}</div>
                 {stats ? (
                   <>
-                    <div className={`text-lg font-bold ${stats.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`text-lg font-bold ${stats.winRate >= 50 ? semanticMetricStyles.positive : semanticMetricStyles.negative}`}>
                       {stats.winRate.toFixed(0)}%
                     </div>
-                    <div className="text-xs text-gray-500">{stats.totalTrades}</div>
+                    <div className={metaTextClass}>{stats.totalTrades}</div>
                   </>
                 ) : (
-                  <div className="text-gray-400">-</div>
+                  <div className="text-dark-text-tertiary">-</div>
                 )}
               </div>
             );
@@ -416,7 +457,7 @@ function PatternsTab({ patterns }: { patterns: PatternAnalysis | null }) {
 
       {/* Streak Analysis */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Streak Analysis</h3>
+        <h3 className={sectionTitleClass}>Streak Analysis</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { key: 'afterWin', label: 'After 1 Win' },
@@ -425,17 +466,17 @@ function PatternsTab({ patterns }: { patterns: PatternAnalysis | null }) {
           ].map(({ key, label }) => {
             const stats = patterns.streakAnalysis?.[key as keyof typeof patterns.streakAnalysis];
             return (
-              <div key={key} className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600 mb-2">{label}</div>
+              <div key={key} className="p-4 bg-dark-bg-tertiary border border-dark-border-primary rounded-lg">
+                <div className="text-sm text-dark-text-secondary mb-2">{label}</div>
                 {stats ? (
                   <>
-                    <div className={`text-2xl font-bold ${stats.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`text-2xl font-bold ${stats.winRate >= 50 ? semanticMetricStyles.positive : semanticMetricStyles.negative}`}>
                       {stats.winRate.toFixed(1)}%
                     </div>
-                    <div className="text-sm text-gray-600">{stats.totalTrades} trades</div>
+                    <div className="text-sm text-dark-text-secondary">{stats.totalTrades} trades</div>
                   </>
                 ) : (
-                  <div className="text-gray-400">No data</div>
+                  <div className="text-dark-text-tertiary">No data</div>
                 )}
               </div>
             );
@@ -445,11 +486,11 @@ function PatternsTab({ patterns }: { patterns: PatternAnalysis | null }) {
 
       {/* All Winning Patterns */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">All Winning Patterns</h3>
+        <h3 className={sectionTitleClass}>All Winning Patterns</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="text-left text-xs text-gray-500 uppercase">
+              <tr className="text-left text-xs text-dark-text-tertiary uppercase tracking-wider">
                 <th className="pb-3">Pattern</th>
                 <th className="pb-3 text-right">Win Rate</th>
                 <th className="pb-3 text-right">Avg P&L</th>
@@ -457,14 +498,14 @@ function PatternsTab({ patterns }: { patterns: PatternAnalysis | null }) {
                 <th className="pb-3 text-right">Trades</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-dark-border-primary">
               {patterns.winningPatterns?.map((pattern, idx) => (
-                <tr key={idx}>
-                  <td className="py-3 font-medium">{pattern.label}</td>
-                  <td className="py-3 text-right text-green-600 font-medium">{pattern.winRate.toFixed(1)}%</td>
-                  <td className="py-3 text-right">${pattern.avgPnl.toFixed(2)}</td>
-                  <td className="py-3 text-right">${pattern.totalPnl.toFixed(2)}</td>
-                  <td className="py-3 text-right">{pattern.totalTrades}</td>
+                <tr key={idx} className="hover:bg-dark-bg-tertiary transition-colors">
+                  <td className="py-3 font-medium text-dark-text-primary">{pattern.label}</td>
+                  <td className={`py-3 text-right font-medium ${semanticMetricStyles.positive}`}>{pattern.winRate.toFixed(1)}%</td>
+                  <td className="py-3 text-right text-dark-text-secondary">${pattern.avgPnl.toFixed(2)}</td>
+                  <td className="py-3 text-right text-dark-text-secondary">${pattern.totalPnl.toFixed(2)}</td>
+                  <td className="py-3 text-right text-dark-text-secondary">{pattern.totalTrades}</td>
                 </tr>
               ))}
             </tbody>
@@ -477,62 +518,52 @@ function PatternsTab({ patterns }: { patterns: PatternAnalysis | null }) {
 
 function SentimentTab({ sentiment }: { sentiment: SentimentData | null }) {
   if (!sentiment) {
-    return <p className="text-gray-500 text-center py-8">No sentiment data available. Add notes to your trades for analysis.</p>;
+    return <p className="text-dark-text-tertiary text-center py-8">No sentiment data available. Add notes to your trades for analysis.</p>;
   }
-
-  const emotionColors: Record<string, string> = {
-    discipline: 'bg-green-500',
-    overconfidence: 'bg-red-500',
-    fear: 'bg-yellow-500',
-    fomo: 'bg-orange-500',
-    greed: 'bg-purple-500',
-    revenge: 'bg-red-700',
-    neutral: 'bg-gray-400',
-  };
 
   return (
     <div className="space-y-6">
       {/* Overall Sentiment */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Overall Sentiment</h3>
+        <h3 className={sectionTitleClass}>Overall Sentiment</h3>
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-4xl font-bold text-purple-600">{sentiment.overallSentiment.score}/100</div>
-            <div className="text-gray-600 capitalize mt-1">
+            <div className="text-4xl font-bold text-dark-accent-secondary">{sentiment.overallSentiment.score}/100</div>
+            <div className="text-dark-text-secondary capitalize mt-1">
               {sentiment.overallSentiment.label.replace('_', ' ')}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm text-gray-600">Trend</div>
+            <div className="text-sm text-dark-text-secondary">Trend</div>
             <div className={`text-lg font-medium capitalize ${
-              sentiment.trend.trend === 'improving' ? 'text-green-600' :
-              sentiment.trend.trend === 'declining' ? 'text-red-600' : 'text-gray-600'
+              sentiment.trend.trend === 'improving' ? semanticMetricStyles.positive :
+              sentiment.trend.trend === 'declining' ? semanticMetricStyles.negative : semanticMetricStyles.neutral
             }`}>
               {sentiment.trend.trend.replace('_', ' ')}
             </div>
           </div>
         </div>
-        <div className="mt-4 text-sm text-gray-600">
+        <div className="mt-4 text-sm text-dark-text-secondary">
           Analyzed {sentiment.tradesWithNotes} trades with notes out of {sentiment.tradesAnalyzed} total
         </div>
       </Card>
 
       {/* Emotion Breakdown */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emotion Breakdown</h3>
+        <h3 className={sectionTitleClass}>Emotion Breakdown</h3>
         <div className="space-y-3">
           {Object.entries(sentiment.emotionBreakdown)
             .sort(([, a], [, b]) => b - a)
             .map(([emotion, percentage]) => (
               <div key={emotion} className="flex items-center gap-3">
-                <div className="w-24 text-sm text-gray-600 capitalize">{emotion}</div>
-                <div className="flex-1 bg-gray-200 rounded-full h-4">
+                <div className="w-24 text-sm text-dark-text-secondary capitalize">{emotion}</div>
+                <div className="flex-1 bg-dark-bg-tertiary border border-dark-border-primary rounded-full h-4">
                   <div
-                    className={`h-4 rounded-full ${emotionColors[emotion] || 'bg-gray-500'}`}
+                    className={`h-4 rounded-full ${emotionBarStyles[emotion] || 'bg-dark-text-tertiary'}`}
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                   />
                 </div>
-                <div className="w-12 text-right text-sm font-medium">{percentage.toFixed(1)}%</div>
+                <div className="w-12 text-right text-sm font-medium text-dark-text-primary">{percentage.toFixed(1)}%</div>
               </div>
             ))}
         </div>
@@ -540,19 +571,19 @@ function SentimentTab({ sentiment }: { sentiment: SentimentData | null }) {
 
       {/* Emotion-Outcome Correlations */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Emotion-Outcome Correlations</h3>
+        <h3 className={sectionTitleClass}>Emotion-Outcome Correlations</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(sentiment.correlations)
             .filter(([_, data]) => data.count >= 2)
             .sort(([, a], [, b]) => b.count - a.count)
             .map(([emotion, data]) => (
-              <div key={emotion} className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600 capitalize mb-2">{emotion}</div>
-                <div className={`text-2xl font-bold ${data.winRate >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+              <div key={emotion} className="p-4 bg-dark-bg-tertiary border border-dark-border-primary rounded-lg">
+                <div className="text-sm text-dark-text-secondary capitalize mb-2">{emotion}</div>
+                <div className={`text-2xl font-bold ${data.winRate >= 50 ? semanticMetricStyles.positive : semanticMetricStyles.negative}`}>
                   {data.winRate.toFixed(1)}%
                 </div>
-                <div className="text-sm text-gray-600">{data.count} trades</div>
-                <div className="text-sm text-gray-600">${data.avgPnl.toFixed(2)} avg</div>
+                <div className="text-sm text-dark-text-secondary">{data.count} trades</div>
+                <div className="text-sm text-dark-text-secondary">${data.avgPnl.toFixed(2)} avg</div>
               </div>
             ))}
         </div>
@@ -563,7 +594,7 @@ function SentimentTab({ sentiment }: { sentiment: SentimentData | null }) {
 
 function RecommendationsTab({ recommendations }: { recommendations: RecommendationsData | null }) {
   if (!recommendations || recommendations.totalCount === 0) {
-    return <p className="text-gray-500 text-center py-8">No recommendations available. Keep trading and adding notes for personalized insights.</p>;
+    return <p className="text-dark-text-tertiary text-center py-8">No recommendations available. Keep trading and adding notes for personalized insights.</p>;
   }
 
   const categoryLabels: Record<string, string> = {
@@ -574,51 +605,40 @@ function RecommendationsTab({ recommendations }: { recommendations: Recommendati
     insights: 'Insights',
   };
 
-  const categoryColors: Record<string, string> = {
-    critical: 'border-red-500 bg-red-50',
-    strengths: 'border-green-500 bg-green-50',
-    warnings: 'border-yellow-500 bg-yellow-50',
-    behavioral: 'border-purple-500 bg-purple-50',
-    insights: 'border-blue-500 bg-blue-50',
-  };
-
   return (
     <div className="space-y-6">
       {Object.entries(recommendations.grouped).map(([category, recs]) => {
         if (!recs || recs.length === 0) return null;
         return (
           <Card key={category} className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <h3 className={sectionTitleClass}>
               {categoryLabels[category] || category}
             </h3>
             <div className="space-y-4">
               {recs.map((rec, idx) => (
                 <div
                   key={idx}
-                  className={`p-4 rounded-lg border-l-4 ${categoryColors[category] || 'border-gray-500 bg-gray-50'}`}
+                  className={`p-4 rounded-lg border-l-4 ${recommendationCategoryStyles[category] || 'border-dark-border-secondary bg-dark-bg-tertiary'}`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-gray-900">{rec.title}</h4>
+                        <h4 className="font-semibold text-dark-text-primary">{rec.title}</h4>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          rec.priority === 'critical' ? 'bg-red-200 text-red-800' :
-                          rec.priority === 'high' ? 'bg-orange-200 text-orange-800' :
-                          rec.priority === 'medium' ? 'bg-yellow-200 text-yellow-800' :
-                          'bg-gray-200 text-gray-800'
+                          priorityBadgeStyles[rec.priority] || priorityBadgeStyles.low
                         }`}>
                           {rec.priority}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{rec.description}</p>
-                      <p className="text-sm font-medium text-gray-700 mt-2">
-                        <span className="text-gray-500">Action:</span> {rec.action}
+                      <p className="text-sm text-dark-text-secondary mt-1">{rec.description}</p>
+                      <p className="text-sm font-medium text-dark-text-secondary mt-2">
+                        <span className="text-dark-text-tertiary">Action:</span> {rec.action}
                       </p>
                     </div>
                     {rec.metric && (
                       <div className="text-right ml-4 flex-shrink-0">
-                        <div className="text-xs text-gray-500">{rec.metric.label}</div>
-                        <div className="font-bold text-gray-900 text-lg">{rec.metric.value}</div>
+                        <div className="text-xs text-dark-text-tertiary">{rec.metric.label}</div>
+                        <div className="font-bold text-dark-text-primary text-lg">{rec.metric.value}</div>
                       </div>
                     )}
                   </div>
